@@ -1,7 +1,8 @@
 import * as React from "react"
-import { cn } from "@/lib/utils"
 import { Accordion as AccordionPrimitive } from "radix-ui"
-import { ChevronDownIcon, ChevronUpIcon } from "lucide-react"
+import { PlusIcon } from "lucide-react"
+
+import { cn } from "@/lib/utils"
 
 function Accordion({
   className,
@@ -23,12 +24,13 @@ function AccordionItem({
   return (
     <AccordionPrimitive.Item
       data-slot="accordion-item"
-      className={cn("not-last:border-b", className)}
+      className={cn("border-b last:border-b-0", className)}
       {...props}
     />
   )
 }
 
+/** Trigger with a plus icon that rotates into an × when open. */
 function AccordionTrigger({
   className,
   children,
@@ -39,14 +41,18 @@ function AccordionTrigger({
       <AccordionPrimitive.Trigger
         data-slot="accordion-trigger"
         className={cn(
-          "group/accordion-trigger relative flex flex-1 items-start justify-between rounded-lg border border-transparent py-2.5 text-left text-sm font-medium transition-all outline-none hover:underline focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:after:border-ring disabled:pointer-events-none disabled:opacity-50 **:data-[slot=accordion-trigger-icon]:ml-auto **:data-[slot=accordion-trigger-icon]:size-4 **:data-[slot=accordion-trigger-icon]:text-muted-foreground",
+          "group/accordion-trigger flex flex-1 items-center justify-between gap-4 rounded-sm py-4 text-left text-[0.9375rem] font-semibold outline-none",
+          "transition-colors duration-150 hover:text-primary-ink",
+          "focus-visible:ring-[3px] focus-visible:ring-ring/35",
+          "disabled:pointer-events-none disabled:opacity-50",
           className
         )}
         {...props}
       >
         {children}
-        <ChevronDownIcon data-slot="accordion-trigger-icon" className="pointer-events-none shrink-0 group-aria-expanded/accordion-trigger:hidden" />
-        <ChevronUpIcon data-slot="accordion-trigger-icon" className="pointer-events-none hidden shrink-0 group-aria-expanded/accordion-trigger:inline" />
+        <span className="grid size-6 shrink-0 place-items-center rounded-sm border bg-card text-muted-foreground transition-[transform,color,border-color] duration-200 ease-out group-hover/accordion-trigger:border-primary/40 group-hover/accordion-trigger:text-primary-ink group-data-[state=open]/accordion-trigger:rotate-45">
+          <PlusIcon className="size-3.5" aria-hidden />
+        </span>
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
   )
@@ -65,7 +71,7 @@ function AccordionContent({
     >
       <div
         className={cn(
-          "h-(--radix-accordion-content-height) pt-0 pb-2.5 [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground [&_p:not(:last-child)]:mb-4",
+          "pb-4 pr-10 leading-relaxed text-muted-foreground [&_a]:text-primary-ink [&_a]:underline [&_a]:underline-offset-3",
           className
         )}
       >
