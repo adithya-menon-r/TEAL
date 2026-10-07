@@ -1,5 +1,6 @@
-import { BrainCircuitIcon, ClockIcon, CpuIcon, LambdaIcon, SquareTerminalIcon, type LucideIcon } from "lucide-react"
+import { ClockIcon, CpuIcon } from "lucide-react"
 
+import { LabIcon } from "@/components/lab-icon"
 import { SectionHeading } from "@/components/landing/section-heading"
 import { Stagger, StaggerItem } from "@/components/motion"
 import { Badge } from "@/components/ui/badge"
@@ -8,23 +9,16 @@ import { LAB_CATALOG } from "@/lib/catalog"
 import { formatResources, formatUsd } from "@/lib/format"
 import type { Template } from "@/lib/types"
 
-const LAB_ICON: Record<string, LucideIcon> = {
-  linux: SquareTerminalIcon,
-  pfl: LambdaIcon,
-  nndl: BrainCircuitIcon,
-}
-
 const VISIBLE_TOOLS = 6
 
 function LabCard({ lab }: { lab: Template }) {
-  const Icon = LAB_ICON[lab.id] ?? SquareTerminalIcon
   const extra = lab.tools.length - VISIBLE_TOOLS
   return (
     <Card variant="interactive" className="h-full">
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <span className="grid size-11 place-items-center rounded-lg border bg-primary-soft text-primary-ink transition-[transform,background-color,color] duration-200 ease-out group-hover/card:-rotate-3 group-hover/card:bg-primary group-hover/card:text-primary-foreground">
-            <Icon className="size-5" />
+            <LabIcon id={lab.id} className="size-5" />
           </span>
           <Badge variant={lab.interface === "jupyter" ? "accent" : "outline"} mono>
             {lab.interface === "jupyter" ? "JupyterLab" : "Terminal"}
