@@ -17,7 +17,7 @@ type Step =
 const SCRIPT: Step[] = [
   { kind: "status", text: "Creating lab-pfl", wait: 650 },
   { kind: "status", text: "Starting container", wait: 900 },
-  { kind: "ready", text: "Ready in 21s · GHC 9.6 · 1 vCPU · 2 GiB", wait: 700 },
+  { kind: "ready", text: "Ready in 21s · 1 vCPU · 2 GiB", wait: 700 },
   { kind: "cmd", prompt: "student@teal:~$", text: "ghci", wait: 450 },
   { kind: "out", text: "GHCi, version 9.6.6  :? for help", wait: 500 },
   { kind: "cmd", prompt: "ghci>", text: "map (*2) [1..5]", wait: 350 },
