@@ -1,13 +1,25 @@
-import { Link } from "react-router-dom"
+import { Faq } from "@/components/landing/faq"
+import { Features } from "@/components/landing/features"
+import { CtaBand, SiteFooter } from "@/components/landing/footer"
+import { Hero } from "@/components/landing/hero"
+import { HowItWorks } from "@/components/landing/how-it-works"
+import { LabsSection } from "@/components/landing/labs-section"
+import { SiteNav } from "@/components/landing/site-nav"
 
-import { Button } from "@/components/ui/button"
-
+/** Public landing page at `/` (visible signed in or out). */
 export default function LandingPage() {
   return (
-    <main className="grid min-h-dvh place-items-center">
-      <Button asChild>
-        <Link to="/login">Log in</Link>
-      </Button>
-    </main>
+    <div className="flex min-h-dvh flex-col overflow-x-clip">
+      <SiteNav />
+      <main className="flex-1">
+        <Hero />
+        <HowItWorks />
+        <LabsSection />
+        <Features />
+        <Faq />
+        <CtaBand />
+      </main>
+      <SiteFooter />
+    </div>
   )
 }
