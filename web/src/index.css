@@ -119,6 +119,7 @@
   --animate-status-ping: status-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
   --animate-caret: caret 1.05s steps(1) infinite;
   --animate-shake: shake 0.32s var(--ease-out-soft);
+  --animate-ready-ring: ready-ring 0.8s var(--ease-out-soft) 2;
 
   @keyframes shimmer {
     from {
@@ -147,6 +148,14 @@
     50.01%,
     100% {
       opacity: 0;
+    }
+  }
+  @keyframes ready-ring {
+    from {
+      box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 45%, transparent);
+    }
+    to {
+      box-shadow: 0 0 0 9px color-mix(in oklab, var(--primary) 0%, transparent);
     }
   }
   @keyframes shake {
@@ -209,6 +218,10 @@
   }
   ::selection {
     background: color-mix(in oklab, var(--primary) 22%, transparent);
+  }
+  /* Room for the dev-only MOCK pill (bottom-left) under page footers. */
+  html[data-mock-badge] footer {
+    padding-bottom: 3.25rem;
   }
   code,
   kbd,
