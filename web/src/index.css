@@ -52,7 +52,7 @@
 
   --border: #d9d3c8;
   --border-strong: #c3bbad;
-  --input: #cbc3b6;
+  --input: #948a7c; /* field borders: 3.25:1 on the field fill (WCAG 1.4.11) */
   --ring: #2f7f7a;
 
   /* Terminal / code surfaces (hero demo, future lab previews) */

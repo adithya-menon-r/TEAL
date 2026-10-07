@@ -15,7 +15,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
         "h-10 w-full min-w-0 rounded-md border border-input bg-popover px-3 py-1 text-base shadow-xs",
         "transition-[border-color,box-shadow,background-color] duration-150 ease-out outline-none",
         "placeholder:text-muted-foreground/80",
-        "hover:border-border-strong",
+        "hover:border-[color-mix(in_oklab,var(--input),var(--foreground)_30%)]",
         "focus-visible:border-ring focus-visible:bg-white focus-visible:ring-[3px] focus-visible:ring-ring/20",
         "aria-invalid:animate-shake aria-invalid:border-danger aria-invalid:ring-[3px] aria-invalid:ring-danger/15",
         "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
