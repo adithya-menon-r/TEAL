@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TEAL Spike 3: Auth Test</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 600px; }
+        .box { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; border-radius: 4px; }
+        input, button { margin: 5px 0; padding: 8px; width: 100%; box-sizing: border-box; }
+        pre { background: #f4f4f4; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h2>TEAL Auth Test (Spike 3)</h2>
+    
+    <div class="box">
+        <h3>1. Sign Up</h3>
+        <p>Use your real <code>@cb.students.amrita.edu</code> email so you can check your inbox.</p>
+        <input type="email" id="email" placeholder="Email (e.g. name@cb.students.amrita.edu)">
+        <input type="password" id="password" placeholder="Password (min 8 chars)">
+        <button id="btnSignup">Sign Up & Send Verification Email</button>
+        <p id="signupStatus"></p>
+    </div>
+
+    <div class="box">
+        <h3>2. Check Verification Status</h3>
+        <p>Click the link in your email, then click this button to refresh your token.</p>
+        <button id="btnCheck">Get ID Token & Verify Status</button>
+        <pre id="tokenOutput">Token will appear here...</pre>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, sendEmailVerification, getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAZJjxmXRTPS_svWzsbWCJtU6D7qVcKESI",
+            authDomain: "bold-future-510804-q8.firebaseapp.com",
+            projectId: "bold-future-510804-q8",
+            storageBucket: "bold-future-510804-q8.firebasestorage.app",
+            messagingSenderId: "1021285110928",
+            appId: "1:1021285110928:web:3c4558944696a5dde17415"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        document.getElementById('btnSignup').addEventListener('click', async () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const status = document.getElementById('signupStatus');
+            
+            try {
+                status.innerText = "Signing up...";
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await sendEmailVerification(userCredential.user);
+                status.innerText = "Success! Verification email sent. Check your inbox (and Junk folder).";
+                status.style.color = "green";
+            } catch (error) {
+                status.innerText = "Error: " + error.message;
+                status.style.color = "red";
+            }
+        });
+
+        document.getElementById('btnCheck').addEventListener('click', async () => {
+            const out = document.getElementById('tokenOutput');
+            const user = auth.currentUser;
+            
+            if (!user) {
+                out.innerText = "No user is currently signed in. Sign up first.";
+                return;
+            }
+
+            try {
+                // Force refresh the token to get the latest email_verified claim
+                await user.reload();
+                const tokenResult = await getIdTokenResult(user, true);
+                
+                const data = {
+                    email: user.email,
+                    email_verified: tokenResult.claims.email_verified,
+                    token: tokenResult.token.substring(0, 40) + "..."
+                };
+                
+                out.innerText = JSON.stringify(data, null, 2);
+                
+                if (data.email_verified) {
+                    out.innerText += "\n\n✅ SPIKE 3 PASSED: email_verified is true!";
+                } else {
+                    out.innerText += "\n\n❌ Still not verified. Did you click the link?";
+                }
+            } catch (error) {
+                out.innerText = "Error: " + error.message;
+            }
+        });
+    </script>
+</body>
+</html>
