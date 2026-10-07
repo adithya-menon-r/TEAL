@@ -29,7 +29,7 @@ function ApiStatus() {
   }, [])
 
   return (
-    <div className="inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-xs">
+    <div className="inline-flex items-center gap-2 self-start rounded-full border bg-card px-3 py-1.5 text-xs sm:self-auto">
       {check.state === "loading" && (
         <>
           <StatusDot tone="neutral" pulse />

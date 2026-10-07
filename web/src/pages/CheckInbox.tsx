@@ -81,7 +81,10 @@ export default function CheckInboxPage() {
       description={
         <>
           We sent a verification link to{" "}
-          <span className="font-semibold break-all text-foreground">{user?.email}</span>. Check
+          <span className="font-semibold [overflow-wrap:anywhere] text-foreground">
+            {user?.email.split("@")[0]}@<wbr />
+            {user?.email.split("@")[1]}
+          </span>. Check
           Junk if you don't see it.
         </>
       }
