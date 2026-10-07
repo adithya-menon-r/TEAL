@@ -1,4 +1,4 @@
-import { LAB_CATALOG, sessionCost } from "@/lib/catalog"
+import { LAB_CATALOG, sessionCost } from "@/lib/mock/catalog"
 import { isAllowedEmail } from "@/lib/email"
 import { parseMockToken } from "@/lib/mock/auth"
 import { delay, hasMockFlag, randomId, readJson, writeJson } from "@/lib/mock/storage"
@@ -144,6 +144,11 @@ export async function mockFetch(url: string, init: RequestInit): Promise<Respons
   const method = (init.method ?? "GET").toUpperCase()
   const path = new URL(url, window.location.origin).pathname
 
+  // Public endpoint: no auth (PLAN.md §6.2)
+  if (method === "GET" && path === "/api/templates") {
+    return json(200, { templates: LAB_CATALOG })
+  }
+
   // Auth middleware (PLAN.md §6.2)
   const auth = new Headers(init.headers).get("Authorization") ?? ""
   const user = parseMockToken(auth.replace(/^Bearer\s+/i, ""))
@@ -161,10 +166,6 @@ export async function mockFetch(url: string, init: RequestInit): Promise<Respons
   try {
     if (method === "GET" && path === "/api/me") {
       return json(200, { email: user.email, uid: user.uid })
-    }
-
-    if (method === "GET" && path === "/api/templates") {
-      return json(200, { templates: LAB_CATALOG })
     }
 
     if (method === "GET" && path === "/api/session") {

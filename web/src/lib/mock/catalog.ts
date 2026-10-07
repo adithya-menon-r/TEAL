@@ -1,10 +1,6 @@
 import type { Template } from "@/lib/types"
 
-/**
- * Static copy of templates/catalog.json (PLAN.md §10), used by the public
- * landing page (no auth, so it can't call GET /api/templates) and by mock mode.
- * The signed-in dashboard must use GET /api/templates instead.
- */
+/** Mock-mode copy of templates/catalog.json (PLAN.md §10); real data comes from GET /api/templates. */
 
 // Cloud Run instance-based prices, asia-south1 (infra/api.env.yaml).
 export const PRICE_VCPU_SEC = 0.000018

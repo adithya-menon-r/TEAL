@@ -5,7 +5,10 @@ import { SectionHeading } from "@/components/landing/section-heading"
 import { Stagger, StaggerItem } from "@/components/motion"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { LAB_CATALOG } from "@/lib/catalog"
+import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useApiResource } from "@/hooks/use-api-resource"
+import { getTemplates } from "@/lib/api"
 import { formatResources, formatUsd } from "@/lib/format"
 import type { Template } from "@/lib/types"
 
@@ -59,7 +62,32 @@ function LabCard({ lab }: { lab: Template }) {
   )
 }
 
+function LabCardSkeleton() {
+  return (
+    <div className="flex h-full flex-col gap-4 rounded-lg border bg-card p-5 shadow-xs">
+      <div className="flex items-start justify-between">
+        <Skeleton className="size-11 rounded-lg" />
+        <Skeleton className="h-6 w-20" />
+      </div>
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-5 w-2/3" />
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-3 w-4/5" />
+      </div>
+      <div className="flex flex-1 flex-wrap content-start gap-1.5">
+        <Skeleton className="h-5 w-16" />
+        <Skeleton className="h-5 w-12" />
+        <Skeleton className="h-5 w-20" />
+        <Skeleton className="h-5 w-10" />
+      </div>
+      <Skeleton className="h-4 w-full" />
+    </div>
+  )
+}
+
 export function LabsSection() {
+  const { data: labs, error, loading, reload } = useApiResource(getTemplates)
+  const failed = !loading && !labs && error !== undefined
   return (
     <section id="labs" className="border-t">
       <div className="mx-auto w-full max-w-6xl px-4 py-20 sm:px-6 sm:py-24">
@@ -74,13 +102,38 @@ export function LabsSection() {
             </>
           }
         />
-        <Stagger className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {LAB_CATALOG.map((lab) => (
-            <StaggerItem key={lab.id} className="h-full md:last:col-span-2 lg:last:col-span-1">
-              <LabCard lab={lab} />
-            </StaggerItem>
-          ))}
-        </Stagger>
+        {labs ? (
+          <Stagger className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {labs.map((lab) => (
+              <StaggerItem key={lab.id} className="h-full md:last:odd:col-span-2 lg:last:odd:col-span-1">
+                <LabCard lab={lab} />
+              </StaggerItem>
+            ))}
+          </Stagger>
+        ) : (
+          <div className="relative mt-12" aria-busy={!failed}>
+            <div
+              className={`grid gap-5 md:grid-cols-2 lg:grid-cols-3 ${failed ? "opacity-40" : ""}`}
+              aria-label={failed ? undefined : "Loading labs"}
+              aria-hidden={failed}
+            >
+              {[0, 1, 2].map((i) => (
+                <LabCardSkeleton key={i} />
+              ))}
+            </div>
+            {failed && (
+              <div
+                role="status"
+                className="absolute inset-0 flex items-center justify-center gap-3 text-sm text-muted-foreground"
+              >
+                <span>Couldn&apos;t load labs right now.</span>
+                <Button variant="outline" size="sm" onClick={reload}>
+                  Retry
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </section>
   )

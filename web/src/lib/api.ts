@@ -53,6 +53,8 @@ type ApiFetchOptions = {
   method?: "GET" | "POST" | "DELETE"
   body?: unknown
   signal?: AbortSignal
+  /** Set false for public endpoints: no ID token is fetched or sent. Default true. */
+  auth?: boolean
 }
 
 function isErrorBody(value: unknown): value is ApiErrorBody {
@@ -64,16 +66,18 @@ function isErrorBody(value: unknown): value is ApiErrorBody {
 }
 
 export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise<T> {
-  const { method = "GET", body, signal } = options
+  const { method = "GET", body, signal, auth = true } = options
 
   if (!isMock && !env.apiUrl) {
     throw new ApiError(0, "not_configured", "VITE_API_URL is not set.")
   }
 
-  const token = await (await loadAuthAdapter()).getIdToken()
-  if (!token) throw new ApiError(401, "unauthenticated", "Please log in again.")
-
-  const headers: Record<string, string> = { Authorization: `Bearer ${token}`, Accept: "application/json" }
+  const headers: Record<string, string> = { Accept: "application/json" }
+  if (auth) {
+    const token = await (await loadAuthAdapter()).getIdToken()
+    if (!token) throw new ApiError(401, "unauthenticated", "Please log in again.")
+    headers.Authorization = `Bearer ${token}`
+  }
   if (body !== undefined) headers["Content-Type"] = "application/json"
 
   let res: Response
@@ -118,8 +122,9 @@ export function getMe(signal?: AbortSignal): Promise<Me> {
   return apiFetch<Me>("/api/me", { signal })
 }
 
+/** Public: works signed out (no ID token is sent). */
 export async function getTemplates(signal?: AbortSignal): Promise<Template[]> {
-  return (await apiFetch<TemplatesResponse>("/api/templates", { signal })).templates
+  return (await apiFetch<TemplatesResponse>("/api/templates", { signal, auth: false })).templates
 }
 
 /** The active session, or null. Poll every 2 s while `starting`, else every 30 s. */
