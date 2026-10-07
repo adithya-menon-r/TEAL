@@ -1,0 +1,21 @@
+# Node
+node_modules/
+dist/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Env and secrets
+.env
+.env.*
+!.env.example
+*-key.json
+*.pem
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
