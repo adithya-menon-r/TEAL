@@ -16,7 +16,7 @@ import logging
 from typing import Any
 
 from .config import settings
-from .cost import estimate_cost
+from .cost import hourly_cost
 
 logger = logging.getLogger(__name__)
 
@@ -55,8 +55,8 @@ def load_catalog() -> None:
 
         # Attach the approximate per-lab cost
         entry = dict(entry)  # shallow copy so we don't mutate the parsed JSON
-        entry["approxCostUsd"] = estimate_cost(
-            entry["cpu"], entry["memory"], entry["durationMinutes"]
+        entry["approxCostUsd"] = round(
+            hourly_cost(entry["cpu"], entry["memory"]) * entry["durationMinutes"] / 60, 3
         )
         validated.append(entry)
 
