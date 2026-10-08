@@ -13,7 +13,7 @@ export function Hero() {
         className="pointer-events-none absolute inset-x-0 -top-16 h-[680px] bg-grid mask-radial-fade opacity-80"
       />
 
-      <div className="relative mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pt-10 pb-20 sm:px-6 sm:pt-16 lg:grid-cols-[0.85fr_1.25fr] lg:gap-10 lg:pt-20 lg:pb-28">
+      <div className="relative mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pt-10 pb-20 sm:px-6 sm:pt-16 lg:grid-cols-[1fr_1.1fr] lg:gap-12 lg:pt-20 lg:pb-28">
         <motion.div variants={stagger(0.07)} initial="hidden" animate="visible" className="min-w-0">
           <motion.p variants={fadeSlideUp} className="mono-label text-accent-ink">
             TEAL — Temporary Environments for Academic Labs
@@ -21,10 +21,10 @@ export function Hero() {
 
           <motion.h1
             variants={fadeSlideUp}
-            className="mt-3 text-[2.5rem] leading-[1.05] font-extrabold tracking-[-0.03em] text-balance sm:text-[3.5rem] lg:text-[3rem] xl:text-[3.4rem]"
+            className="mt-3 text-[2.5rem] leading-[1.05] font-extrabold tracking-[-0.03em] text-balance sm:text-[3.5rem] lg:text-[2.75rem] xl:text-[3.25rem]"
           >
             Your course lab, ready in seconds.{" "}
-            <span className="text-primary-ink">Nothing to install.</span>
+            <span className="block text-primary-ink">Nothing to install.</span>
           </motion.h1>
 
           <motion.p
