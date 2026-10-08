@@ -227,8 +227,32 @@ def get_active_session(uid: str) -> dict[str, Any] | None:
     session_id = active["sessionId"]
     session_snap = db.collection("sessions").document(session_id).get()
     if not session_snap.exists:
+        # Dangling activeSession pointing to non-existent session
+        db.collection("activeSessions").document(uid).delete()
         return None
     doc = session_snap.to_dict()
+
+    # If the session has already ended or failed, remove the active session pointer
+    if doc.get("status") in ("ended", "failed"):
+        db.collection("activeSessions").document(uid).delete()
+        return None
+
+    now = _now()
+    expires_at = doc.get("expiresAt") or active.get("expiresAt")
+    if isinstance(expires_at, str):
+        try:
+            expires_at = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
+        except Exception:
+            expires_at = None
+    elif isinstance(expires_at, datetime) and expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+    if expires_at and now >= expires_at:
+        logger.info("Session %s for uid %s expired (now=%s >= expiresAt=%s), auto-ending", session_id, uid, now, expires_at)
+        active["uid"] = uid
+        end(active, "expired")
+        return None
+
     result = _session_to_dict(doc, session_id)
     if result.get("status") == "running" and not result.get("accessUrl") and doc.get("url"):
         secret_snap = db.collection("sessionSecrets").document(session_id).get()
@@ -254,6 +278,23 @@ def ready_check(session_id: str, uid: str) -> dict[str, Any]:
         raise KeyError(session_id)
 
     doc = session_snap.to_dict()
+    now = _now()
+    expires_at = doc.get("expiresAt")
+    if isinstance(expires_at, str):
+        try:
+            expires_at = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
+        except Exception:
+            expires_at = None
+    elif isinstance(expires_at, datetime) and expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+    if expires_at and now >= expires_at:
+        logger.info("Starting session %s for uid %s expired before becoming ready, ending", session_id, uid)
+        active = {"sessionId": session_id, "uid": uid}
+        end(active, "expired")
+        updated_snap = session_ref.get()
+        return _session_to_dict(updated_snap.to_dict() if updated_snap.exists else doc, session_id)
+
     if doc["status"] != "starting":
         return _session_to_dict(doc, session_id)
 
@@ -397,13 +438,27 @@ def end_session(uid: str, reason: EndReason = "user") -> dict[str, Any]:
     return end(active, reason)
 
 
-def end_session_by_id(session_id: str, reason: EndReason) -> dict[str, Any]:
+def end_session_by_id(session_id: str, reason: EndReason = "user") -> dict[str, Any]:
     db = _get_db()
     snap = db.collection("sessions").document(session_id).get()
     if not snap.exists:
         raise KeyError(session_id)
     doc = snap.to_dict()
     uid = doc.get("uid", "")
+
+    now = _now()
+    expires_at = doc.get("expiresAt")
+    if isinstance(expires_at, str):
+        try:
+            expires_at = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
+        except Exception:
+            expires_at = None
+    elif isinstance(expires_at, datetime) and expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+    if expires_at and now >= expires_at:
+        reason = "expired"
+
     active_snap = db.collection("activeSessions").document(uid).get()
     active = active_snap.to_dict() if active_snap.exists else {"sessionId": session_id, "uid": uid}
     active["uid"] = uid

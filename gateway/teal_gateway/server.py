@@ -349,12 +349,20 @@ class GatewayApp:
         api_url = os.environ.get("TEAL_API_URL", "").rstrip("/")
         token = request.cookies.get("teal_lab", "")
 
+        reason = "user"
+        try:
+            body = await request.json()
+            if isinstance(body, dict) and body.get("reason"):
+                reason = body["reason"]
+        except Exception:
+            pass
+
         cost_result = {"costUsd": 0.0}
         if api_url and session_id:
             end_endpoint = f"{api_url}/api/labs/{session_id}/end"
             try:
-                headers = {"Authorization": f"Bearer {token}"}
-                async with self.session.post(end_endpoint, headers=headers) as resp:
+                headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+                async with self.session.post(end_endpoint, headers=headers, json={"reason": reason}) as resp:
                     if resp.status == 200:
                         cost_result = await resp.json()
                     else:

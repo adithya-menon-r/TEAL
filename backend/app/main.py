@@ -17,7 +17,6 @@ Routes (§8.1):
 import json
 import logging
 import logging.config
-import os
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -156,8 +155,14 @@ def create_session(
     except ValueError as exc:
         msg = str(exc)
         if msg.startswith("active_session:"):
-            existing_id = msg.split(":", 1)[1]
             existing = sessions.get_active_session(user["uid"])
+            if existing is None:
+                # The existing session was expired and just got auto-ended; retry launch
+                try:
+                    session = sessions.launch(user["uid"], user["email"], template)
+                    return {"session": session}
+                except Exception:
+                    pass
             return JSONResponse(
                 status_code=409,
                 content={"error": "active_session", "session": existing},
@@ -183,13 +188,14 @@ def delete_session(user: dict = Depends(current_user)) -> dict:
 
 
 @app.post("/api/labs/{session_id}/end")
-def lab_end_callback(
+async def lab_end_callback(
     session_id: str,
     request: Request,
     authorization: str = Header(default=""),
 ) -> dict:
     """
-    Called by the lab gateway when the student clicks End Lab (§8.1).
+    Called by the lab gateway when the student clicks End Lab (§8.1)
+    or when the lab session expires.
     Auth: Bearer <plaintext lab token> — checked against stored SHA-256 hash.
     """
     token = ""
@@ -199,8 +205,16 @@ def lab_end_callback(
     if not token or not sessions.verify_lab_token(session_id, token):
         raise HTTPException(status_code=401, detail={"error": "invalid_token", "message": "Invalid lab token."})
 
+    reason = "user"
     try:
-        session = sessions.end_session_by_id(session_id, reason="user")
+        body = await request.json()
+        if isinstance(body, dict) and body.get("reason") in ("user", "expired", "failed", "deleted"):
+            reason = body["reason"]
+    except Exception:
+        pass
+
+    try:
+        session = sessions.end_session_by_id(session_id, reason=reason)
     except KeyError:
         raise HTTPException(status_code=404, detail={"error": "not_found", "message": "Session not found."})
 

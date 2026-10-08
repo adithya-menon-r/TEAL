@@ -22,4 +22,4 @@ USER student
 WORKDIR /home/student/work
 
 ENTRYPOINT ["/opt/teal-gateway/venv/bin/python", "-m", "teal_gateway", "--upstream=http://127.0.0.1:7681", "--prefix=/terminal", "--", \
-            "ttyd", "-W", "-i", "lo", "-p", "7681", "-b", "/terminal", "-t", "fontSize=15", "tmux", "new", "-A", "-s", "lab"]
+            "ttyd", "-W", "-i", "lo", "-p", "7681", "-b", "/terminal", "-t", "fontSize=15", "-t", "theme={\"background\": \"#000000\", \"foreground\": \"#f8fafc\", \"cursor\": \"#2dd4bf\", \"cursorAccent\": \"#000000\", \"selectionBackground\": \"#134e4a\"}", "tmux", "new", "-A", "-s", "lab"]

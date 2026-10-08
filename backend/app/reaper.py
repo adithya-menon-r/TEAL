@@ -131,7 +131,12 @@ def _field(item: Any, key: str) -> Any:
 def _as_utc(value: Any) -> datetime | None:
     if value is None:
         return None
-    if not isinstance(value, datetime):
+    if isinstance(value, str):
+        try:
+            value = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except Exception:
+            raise TypeError(f"expected datetime or iso string, got {type(value).__name__}")
+    elif not isinstance(value, datetime):
         raise TypeError(f"expected datetime, got {type(value).__name__}")
     if value.tzinfo is None:
         return value.replace(tzinfo=timezone.utc)

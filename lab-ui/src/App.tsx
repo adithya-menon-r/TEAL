@@ -132,6 +132,13 @@ export const App: React.FC = () => {
       ended: true,
       reason: 'expired',
     });
+    fetch('/__teal/end', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: 'expired' }),
+    }).catch(() => {
+      // Ignore network errors; backend JIT expiry / reaper will handle cleanup
+    });
   }, []);
 
   // Handler for End Lab execution
