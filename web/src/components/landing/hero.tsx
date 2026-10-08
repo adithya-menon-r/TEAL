@@ -37,7 +37,7 @@ export function Hero() {
           </motion.p>
 
           <motion.div variants={fadeSlideUp} className="mt-8 flex flex-wrap items-center gap-3">
-            <AuthCtas size="lg" />
+            <AuthCtas size="lg" secondary="none" />
           </motion.div>
         </motion.div>
 

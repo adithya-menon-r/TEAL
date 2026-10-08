@@ -96,11 +96,6 @@ export default function SignupPage() {
           }}
           onBlur={() => email && touch("email")}
           error={shown("email")}
-          hint={
-            <>
-              Format: <span className="font-mono text-[0.75rem]">{EMAIL_DOMAIN_HINT}</span>
-            </>
-          }
           autoFocus
         />
         <FormField

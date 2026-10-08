@@ -8,7 +8,6 @@ import { CatalogGrid, CatalogSkeleton } from "@/components/dashboard/catalog-gri
 import { FailureCard } from "@/components/dashboard/failure-card"
 import { RecentLabs, RecentLabsSkeleton } from "@/components/dashboard/recent-labs"
 import { FadeIn } from "@/components/motion"
-import { MonoLabel } from "@/components/mono-label"
 import { Notice } from "@/components/notice"
 import { Button } from "@/components/ui/button"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -135,12 +134,17 @@ export default function DashboardPage() {
   return (
     <TooltipProvider>
       <div className="flex flex-col gap-10">
-        <FadeIn>
-          <MonoLabel>Dashboard</MonoLabel>
-          <h1 className="mt-1.5 text-2xl font-bold tracking-tight sm:text-[1.75rem]">
+        <motion.header
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={transitions.slow}
+          className="flex flex-col items-center pt-2 text-center sm:pt-4"
+        >
+          <h1 className="max-w-full text-[2rem] leading-tight font-extrabold tracking-[-0.025em] break-words sm:text-5xl">
             Hi, <span className="text-primary-ink">{name}</span>
           </h1>
-        </FadeIn>
+          <span aria-hidden className="mt-4 h-1 w-10 rounded-full bg-accent" />
+        </motion.header>
 
         {/* Connection problems, current lab, failed launch */}
         <div className="-mt-4 flex flex-col gap-4 empty:hidden">

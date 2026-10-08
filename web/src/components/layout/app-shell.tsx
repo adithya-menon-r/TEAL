@@ -74,7 +74,7 @@ export function AppShell() {
       </main>
 
       <footer className="border-t">
-        <div className="mx-auto w-full max-w-6xl px-4 py-5 text-center text-xs text-muted-foreground sm:px-6">
+        <div className="mx-auto w-full max-w-6xl px-4 py-3 text-center text-xs text-muted-foreground sm:px-6">
           <span>© {new Date().getFullYear()} TEAL</span>
         </div>
       </footer>

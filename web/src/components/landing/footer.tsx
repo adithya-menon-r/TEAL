@@ -21,7 +21,7 @@ export function CtaBand() {
             <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">
               All you need is a browser and your Amrita student email.
             </p>
-            <AuthCtas size="lg" className="mt-7 flex-wrap justify-center" />
+            <AuthCtas size="lg" secondary="none" className="mt-7 flex-wrap justify-center" />
           </div>
         </Reveal>
       </div>
@@ -45,6 +45,10 @@ export function SiteFooter() {
             Temporary Environments for Academic Labs. Ready-to-use course labs in the browser for
             Amrita students.
           </p>
+          <span className="inline-flex items-center gap-2 font-mono text-xs text-muted-foreground">
+            <GoogleCloudLogo className="size-4" />
+            Built on Google Cloud Platform
+          </span>
         </div>
 
         <nav aria-label="Footer" className="grid grid-cols-2 gap-x-12 gap-y-2 text-sm">
@@ -63,12 +67,8 @@ export function SiteFooter() {
         </nav>
       </div>
       <div className="border-t">
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-2 px-4 py-5 text-center text-xs text-muted-foreground sm:px-6">
-          <span className="inline-flex items-center gap-2 font-mono">
-            <GoogleCloudLogo className="size-4" />
-            Built on Google Cloud Platform
-          </span>
-          <span>© {new Date().getFullYear()} TEAL</span>
+        <div className="mx-auto w-full max-w-6xl px-4 py-3 text-center text-xs text-muted-foreground sm:px-6">
+          © {new Date().getFullYear()} TEAL
         </div>
       </div>
     </footer>

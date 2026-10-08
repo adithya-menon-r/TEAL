@@ -83,7 +83,7 @@ export function TerminalDemo({ className }: { className?: string }) {
     >
       {/* Browser chrome */}
       <div className="flex items-center gap-3 border-b bg-muted/60 px-3 py-2.5">
-        <div className="mx-auto flex min-w-0 max-w-[75%] items-center gap-1.5 rounded-md border bg-card px-2.5 py-1 font-mono text-[0.6875rem] text-muted-foreground">
+        <div className="flex min-w-0 max-w-[75%] items-center gap-1.5 rounded-md border bg-card px-2.5 py-1 font-mono text-[0.6875rem] text-muted-foreground">
           <LockIcon className="size-3 shrink-0" aria-hidden />
           <span className="truncate">lab-k3x9p2q7ad-el.a.run.app</span>
         </div>
