@@ -4,9 +4,7 @@ import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom"
 import { AuthProvider } from "@/auth/AuthProvider"
 import { PublicOnly, RequireUnverified, RequireVerified } from "@/auth/guards"
 import { AppShell } from "@/components/layout/app-shell"
-import { MockBadge } from "@/components/mock-badge"
 import { Toaster } from "@/components/ui/sonner"
-import { isMock } from "@/lib/env"
 import CheckInboxPage from "@/pages/CheckInbox"
 import DashboardPage from "@/pages/Dashboard"
 import ForgotPasswordPage from "@/pages/ForgotPassword"
@@ -55,7 +53,6 @@ export default function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
         <Toaster position="bottom-right" closeButton />
-        {isMock && <MockBadge />}
       </AuthProvider>
     </BrowserRouter>
   )

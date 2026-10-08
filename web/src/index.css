@@ -219,10 +219,6 @@
   ::selection {
     background: color-mix(in oklab, var(--primary) 22%, transparent);
   }
-  /* Room for the dev-only MOCK pill (bottom-left) under page footers. */
-  html[data-mock-badge] footer {
-    padding-bottom: 3.25rem;
-  }
   code,
   kbd,
   samp,

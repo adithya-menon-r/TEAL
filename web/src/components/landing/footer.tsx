@@ -45,7 +45,7 @@ export function SiteFooter() {
             Temporary Environments for Academic Labs. Ready-to-use course labs in the browser for
             Amrita students.
           </p>
-          <span className="inline-flex items-center gap-2 font-mono text-xs text-muted-foreground">
+          <span className="mt-3 inline-flex items-center gap-2 font-mono text-xs text-muted-foreground">
             <GoogleCloudLogo className="size-4" />
             Built on Google Cloud Platform
           </span>

@@ -87,7 +87,7 @@ export function TerminalDemo({ className }: { className?: string }) {
           <LockIcon className="size-3 shrink-0" aria-hidden />
           <span className="truncate">lab-k3x9p2q7ad-el.a.run.app</span>
         </div>
-        <div className="-my-2.5 -mr-3 flex self-stretch text-muted-foreground" aria-hidden>
+        <div className="-my-2.5 -mr-3 ml-auto flex self-stretch text-muted-foreground" aria-hidden>
           <span className="grid w-9 place-items-center transition-colors hover:bg-foreground/[0.07]">
             <MinusIcon className="size-3.5" />
           </span>

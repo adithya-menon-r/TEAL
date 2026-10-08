@@ -2,7 +2,6 @@ import { useCallback, useRef, useState, type ReactNode, type Ref } from "react"
 import { AnimatePresence, motion } from "motion/react"
 import { InfoIcon, RotateCwIcon, WifiOffIcon, XIcon } from "lucide-react"
 
-import { useAuth } from "@/auth/context"
 import { ActiveLabCard } from "@/components/dashboard/active-lab-card"
 import { CatalogGrid, CatalogSkeleton } from "@/components/dashboard/catalog-grid"
 import { FailureCard } from "@/components/dashboard/failure-card"
@@ -81,8 +80,6 @@ function SectionHeader({
 }
 
 export default function DashboardPage() {
-  const { user } = useAuth()
-  const name = user?.email.split("@")[0] ?? "there"
 
   const lab = useLabSession()
   const templates = useApiResource(getTemplates)
@@ -134,20 +131,8 @@ export default function DashboardPage() {
   return (
     <TooltipProvider>
       <div className="flex flex-col gap-10">
-        <motion.header
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={transitions.slow}
-          className="flex flex-col items-center pt-2 text-center sm:pt-4"
-        >
-          <h1 className="max-w-full text-[2rem] leading-tight font-extrabold tracking-[-0.025em] break-words sm:text-5xl">
-            Hi, <span className="text-primary-ink">{name}</span>
-          </h1>
-          <span aria-hidden className="mt-4 h-1 w-10 rounded-full bg-accent" />
-        </motion.header>
-
         {/* Connection problems, current lab, failed launch */}
-        <div className="-mt-4 flex flex-col gap-4 empty:hidden">
+        <div className="flex flex-col gap-4 empty:hidden">
           <Presence show={!!lab.pollError} id="offline">
             <Notice
               tone="danger"
