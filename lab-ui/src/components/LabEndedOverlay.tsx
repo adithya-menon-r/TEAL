@@ -1,42 +1,51 @@
 import React from 'react';
-import { CheckCircle2, ArrowRight } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Clock, AlertCircle } from 'lucide-react';
 
 interface LabEndedOverlayProps {
   reason: 'user' | 'expired' | 'disconnected';
-  costUsd: number | null;
   dashboardUrl: string;
-  labName?: string;
 }
 
 export const LabEndedOverlay: React.FC<LabEndedOverlayProps> = ({
   reason,
-  costUsd,
   dashboardUrl,
-  labName,
 }) => {
-  const getReasonTitle = () => {
+  const getReasonConfig = () => {
     switch (reason) {
       case 'user':
-        return 'Lab Session Ended';
+        return {
+          title: 'Lab Session Ended',
+          description:
+            'You have successfully ended this lab session. All container resources have been torn down.',
+          icon: <CheckCircle2 size={28} />,
+          iconBg: 'var(--primary-soft)',
+          iconColor: 'var(--primary)',
+          iconBorder: 'color-mix(in srgb, var(--primary) 30%, transparent)',
+        };
       case 'expired':
-        return 'Session Duration Expired';
+        return {
+          title: 'Session Expired',
+          description:
+            'Your lab allocation reached its cutoff time and was automatically terminated.',
+          icon: <Clock size={28} />,
+          iconBg: 'var(--warning-soft)',
+          iconColor: 'var(--warning)',
+          iconBorder: 'color-mix(in srgb, var(--warning) 30%, transparent)',
+        };
       case 'disconnected':
-        return 'Lab Container Terminated';
+        return {
+          title: 'Lab Terminated',
+          description:
+            'The lab session was terminated and resources have been torn down.',
+          icon: <AlertCircle size={28} />,
+          iconBg: 'var(--danger-soft)',
+          iconColor: 'var(--danger)',
+          iconBorder: 'color-mix(in srgb, var(--danger) 30%, transparent)',
+        };
     }
   };
 
-  const getReasonDescription = () => {
-    switch (reason) {
-      case 'user':
-        return 'You have successfully ended this lab session. All container resources have been torn down.';
-      case 'expired':
-        return 'Your 60-minute lab allocation reached its cutoff time and was automatically terminated.';
-      case 'disconnected':
-        return 'The lab service was deleted or is no longer reachable. If you ended it from the dashboard, this is normal.';
-    }
-  };
-
-  const formattedCost = costUsd !== null ? `$${costUsd.toFixed(4)}` : '$0.0000';
+  const config = getReasonConfig();
   const returnUrl = dashboardUrl || '/';
 
   return (
@@ -45,7 +54,7 @@ export const LabEndedOverlay: React.FC<LabEndedOverlayProps> = ({
         position: 'fixed',
         inset: 0,
         zIndex: 200,
-        background: 'rgba(9, 13, 22, 0.94)',
+        background: 'rgba(23, 43, 42, 0.75)',
         backdropFilter: 'blur(8px)',
         display: 'flex',
         alignItems: 'center',
@@ -54,92 +63,76 @@ export const LabEndedOverlay: React.FC<LabEndedOverlayProps> = ({
       }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
         style={{
-          background: 'var(--bg-surface)',
-          border: '1px solid var(--border-card)',
+          background: 'var(--card)',
+          border: '1px solid var(--border)',
           borderRadius: '16px',
           width: '100%',
-          maxWidth: '520px',
+          maxWidth: '440px',
           padding: '36px 32px',
           textAlign: 'center',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
-          animation: 'fadeIn 0.25s ease-out',
+          boxShadow: 'var(--shadow-lg)',
+          animation: 'fadeIn 0.22s ease-out',
         }}
       >
         <div
           style={{
-            width: '56px',
-            height: '56px',
+            width: '52px',
+            height: '52px',
             borderRadius: '50%',
-            background: 'rgba(56, 189, 248, 0.1)',
-            border: '1px solid rgba(56, 189, 248, 0.3)',
+            background: config.iconBg,
+            border: `1px solid ${config.iconBorder}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            margin: '0 auto 20px auto',
-            color: '#38bdf8',
+            margin: '0 auto 18px auto',
+            color: config.iconColor,
           }}
         >
-          <CheckCircle2 size={32} />
+          {config.icon}
         </div>
 
-        <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#f8fafc', marginBottom: '8px' }}>
-          {getReasonTitle()}
+        <h2
+          style={{
+            fontSize: '1.25rem',
+            fontWeight: 700,
+            color: 'var(--foreground)',
+            marginBottom: '8px',
+            fontFamily: 'var(--font-heading)',
+          }}
+        >
+          {config.title}
         </h2>
 
-        <p style={{ fontSize: '0.875rem', color: '#94a3b8', lineHeight: 1.5, marginBottom: '28px' }}>
-          {getReasonDescription()}
-        </p>
-
-        {/* Cost & Summary Card (§4.4) */}
-        <div
+        <p
           style={{
-            background: 'rgba(30, 41, 59, 0.5)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: '10px',
-            padding: '16px 20px',
-            display: 'flex',
-            justifyContent: 'space-around',
-            alignItems: 'center',
+            fontSize: '0.85rem',
+            color: 'var(--muted-foreground)',
+            lineHeight: 1.5,
             marginBottom: '28px',
           }}
         >
-          <div>
-            <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>
-              Environment
-            </div>
-            <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#f8fafc' }}>
-              {labName || 'Linux Lab'}
-            </div>
-          </div>
-
-          <div style={{ height: '32px', width: '1px', background: 'var(--border-subtle)' }} />
-
-          <div>
-            <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>
-              Session Cost
-            </div>
-            <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#10b981', fontFamily: 'var(--font-mono)' }}>
-              {formattedCost}
-            </div>
-          </div>
-        </div>
+          {config.description}
+        </p>
 
         <a
           href={returnUrl}
           className="btn btn-primary"
           style={{
             display: 'inline-flex',
-            padding: '0.75rem 1.75rem',
-            fontSize: '0.925rem',
+            padding: '0.75rem 1.5rem',
+            fontSize: '0.9rem',
             textDecoration: 'none',
             justifyContent: 'center',
             width: '100%',
+            borderRadius: '8px',
           }}
           id="btn-return-dashboard"
         >
           <span>Return to Dashboard</span>
-          <ArrowRight size={16} />
+          <ArrowRight size={15} />
         </a>
       </div>
     </div>

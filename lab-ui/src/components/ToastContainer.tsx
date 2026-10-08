@@ -11,51 +11,94 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onDismis
   if (toasts.length === 0) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: '70px',
-      right: '24px',
-      zIndex: 9999,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '10px',
-      maxWidth: '380px',
-      width: '100%',
-      pointerEvents: 'none',
-    }}>
+    <div
+      style={{
+        position: 'fixed',
+        top: '60px',
+        right: '20px',
+        zIndex: 9999,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+        maxWidth: '360px',
+        width: '100%',
+        pointerEvents: 'none',
+      }}
+    >
       {toasts.map((toast) => {
         const isDanger = toast.type === 'danger';
         const isWarning = toast.type === 'warning';
 
-        const borderColor = isDanger ? 'rgba(239, 68, 68, 0.4)' : isWarning ? 'rgba(245, 158, 11, 0.4)' : 'rgba(56, 189, 248, 0.4)';
-        const bgColor = isDanger ? 'rgba(30, 15, 20, 0.95)' : isWarning ? 'rgba(30, 25, 15, 0.95)' : 'rgba(15, 25, 35, 0.95)';
-        const iconColor = isDanger ? '#ef4444' : isWarning ? '#f59e0b' : '#38bdf8';
+        const borderColor = isDanger
+          ? 'rgba(180, 35, 24, 0.35)'
+          : isWarning
+          ? 'rgba(161, 78, 6, 0.35)'
+          : 'var(--border)';
+
+        const bgColor = isDanger
+          ? 'var(--danger-soft)'
+          : isWarning
+          ? 'var(--warning-soft)'
+          : 'var(--card)';
+
+        const titleColor = isDanger
+          ? 'var(--danger)'
+          : isWarning
+          ? 'var(--warning)'
+          : 'var(--foreground)';
+
+        const iconColor = isDanger
+          ? 'var(--danger)'
+          : isWarning
+          ? 'var(--warning)'
+          : 'var(--primary)';
 
         return (
           <div
             key={toast.id}
+            role="status"
             style={{
               pointerEvents: 'auto',
               background: bgColor,
               border: `1px solid ${borderColor}`,
               borderRadius: '8px',
               padding: '12px 14px',
-              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.6)',
+              boxShadow: 'var(--shadow-md)',
               display: 'flex',
               alignItems: 'flex-start',
-              gap: '12px',
-              animation: 'slideDown 0.25s ease-out',
-              backdropFilter: 'blur(8px)',
+              gap: '10px',
+              animation: 'slideDown 0.2s ease-out',
             }}
           >
             <div style={{ color: iconColor, marginTop: '2px', flexShrink: 0 }}>
-              {isDanger ? <AlertCircle size={18} /> : isWarning ? <AlertTriangle size={18} /> : <Info size={18} />}
+              {isDanger ? (
+                <AlertCircle size={16} />
+              ) : isWarning ? (
+                <AlertTriangle size={16} />
+              ) : (
+                <Info size={16} />
+              )}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#f8fafc', marginBottom: '2px' }}>
+              <div
+                style={{
+                  fontSize: '0.8125rem',
+                  fontWeight: 700,
+                  color: titleColor,
+                  marginBottom: '2px',
+                  fontFamily: 'var(--font-heading)',
+                }}
+              >
                 {toast.title}
               </div>
-              <div style={{ fontSize: '0.8rem', color: '#cbd5e1', lineHeight: '1.35' }}>
+              <div
+                style={{
+                  fontSize: '0.78rem',
+                  color: 'var(--foreground)',
+                  opacity: 0.9,
+                  lineHeight: '1.35',
+                }}
+              >
                 {toast.message}
               </div>
             </div>
@@ -64,7 +107,7 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onDismis
               style={{
                 background: 'none',
                 border: 'none',
-                color: '#64748b',
+                color: 'var(--muted-foreground)',
                 cursor: 'pointer',
                 padding: '2px',
                 display: 'flex',
@@ -73,7 +116,7 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onDismis
               }}
               aria-label="Dismiss toast"
             >
-              <X size={15} />
+              <X size={14} />
             </button>
           </div>
         );

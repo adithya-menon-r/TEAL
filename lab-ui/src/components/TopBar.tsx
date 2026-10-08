@@ -1,14 +1,12 @@
 import React from 'react';
 import { Countdown } from './Countdown';
-import { FolderDown, Power, PanelRightClose, PanelRightOpen, Terminal, BookOpen } from 'lucide-react';
+import { LogoMark } from './LogoMark';
+import { Power } from 'lucide-react';
 import { LabInfo } from '../types';
 
 interface TopBarProps {
   labInfo: LabInfo;
   expiresAt: string;
-  isPanelOpen: boolean;
-  onTogglePanel: () => void;
-  onOpenFiles: () => void;
   onTriggerEnd: () => void;
   onExpire: () => void;
   onWarnTenMin: () => void;
@@ -18,103 +16,81 @@ interface TopBarProps {
 export const TopBar: React.FC<TopBarProps> = ({
   labInfo,
   expiresAt,
-  isPanelOpen,
-  onTogglePanel,
-  onOpenFiles,
   onTriggerEnd,
   onExpire,
   onWarnTenMin,
   onWarnTwoMin,
 }) => {
-  const isJupyter = labInfo.interface === 'jupyter';
-
   return (
     <header
       style={{
         height: 'var(--topbar-height)',
-        background: 'var(--bg-surface)',
-        borderBottom: '1px solid var(--border-subtle)',
-        display: 'flex',
+        background: 'var(--card)',
+        borderBottom: '1px solid var(--border)',
+        display: 'grid',
+        gridTemplateColumns: '1fr auto 1fr',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 16px',
+        padding: '0 20px',
         zIndex: 50,
+        boxShadow: '0 1px 0 0 rgb(23 43 42 / 0.03)',
       }}
     >
-      {/* Left section: Logo, Title, Countdown & End Lab */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div
-            style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '6px',
-              background: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 0 10px rgba(56, 189, 248, 0.3)',
-            }}
-          >
-            {isJupyter ? <BookOpen size={16} color="#fff" /> : <Terminal size={16} color="#fff" />}
-          </div>
-          <span style={{ fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.05em', color: '#f8fafc' }}>
-            TEAL
-          </span>
-          <span
-            style={{
-              fontSize: '0.75rem',
-              color: '#94a3b8',
-              background: 'rgba(30, 41, 59, 0.6)',
-              padding: '2px 8px',
-              borderRadius: '9999px',
-              border: '1px solid var(--border-subtle)',
-            }}
-          >
-            {labInfo.name || 'Cloud Lab'}
-          </span>
-        </div>
+      {/* Left: Brand Logo & Wordmark */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '9px',
+          justifySelf: 'start',
+        }}
+        title={labInfo.name ? `${labInfo.name} · TEAL` : 'Lab Environment · TEAL'}
+      >
+        <LogoMark style={{ width: '26px', height: '26px' }} />
+        <span
+          style={{
+            fontFamily: 'var(--font-heading)',
+            fontWeight: 800,
+            fontSize: '0.95rem',
+            letterSpacing: '0.14em',
+            color: 'var(--foreground)',
+            lineHeight: 1,
+            transform: 'translateY(1px)',
+            userSelect: 'none',
+          }}
+        >
+          TEAL
+        </span>
+      </div>
 
-        <div style={{ height: '16px', width: '1px', background: 'var(--border-subtle)' }} />
-
+      {/* Center: Live Countdown (Centered & Prominent) */}
+      <div style={{ justifySelf: 'center' }}>
         <Countdown
           expiresAt={expiresAt}
           onExpire={onExpire}
           onWarnTenMin={onWarnTenMin}
           onWarnTwoMin={onWarnTwoMin}
         />
+      </div>
 
+      {/* Right: End Lab button */}
+      <div style={{ justifySelf: 'end' }}>
         <button
-          className="btn btn-danger"
+          className="btn btn-destructive-outline"
           onClick={onTriggerEnd}
           title="End this lab session"
           id="btn-end-lab"
+          style={{
+            height: '34px',
+            padding: '0 14px',
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '7px',
+          }}
         >
           <Power size={14} />
           <span>End Lab</span>
-        </button>
-      </div>
-
-      {/* Right section: Files & Panel toggle */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <button
-          className="btn btn-secondary"
-          onClick={onOpenFiles}
-          title="Browse and download files from /home/student"
-          id="btn-files"
-        >
-          <FolderDown size={15} style={{ color: '#38bdf8' }} />
-          <span>Files</span>
-        </button>
-
-        <button
-          className="btn btn-secondary"
-          onClick={onTogglePanel}
-          title={isPanelOpen ? 'Collapse lab details panel' : 'Expand lab details panel'}
-          style={{ padding: '0.45rem' }}
-          id="btn-toggle-panel"
-        >
-          {isPanelOpen ? <PanelRightClose size={16} /> : <PanelRightOpen size={16} />}
         </button>
       </div>
     </header>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Clock } from 'lucide-react';
+import { Timer } from 'lucide-react';
 
 interface CountdownProps {
   expiresAt: string;
@@ -32,7 +32,6 @@ export const Countdown: React.FC<CountdownProps> = ({
     const initial = calculateRemaining();
     setSecondsLeft(initial);
 
-    // Initial check in case lab was re-opened with < 10 or < 2 min left
     if (initial <= 600 && !warnedTenMinRef.current) {
       warnedTenMinRef.current = true;
       onWarnTenMin();
@@ -70,8 +69,20 @@ export const Countdown: React.FC<CountdownProps> = ({
 
   if (secondsLeft === null) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '0.85rem' }}>
-        <Clock size={15} />
+      <div
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px',
+          color: 'var(--muted-foreground)',
+          fontSize: '0.8rem',
+          padding: '3px 10px',
+          borderRadius: '9999px',
+          border: '1px solid var(--border)',
+          background: 'var(--card)',
+        }}
+      >
+        <Timer size={13} />
         <span>--:--</span>
       </div>
     );
@@ -86,43 +97,58 @@ export const Countdown: React.FC<CountdownProps> = ({
       ? `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
       : `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
-  // Amber at <= 10 min (600s), Red at <= 2 min (120s)
+  // Normal, Amber (<= 10 min / 600s), Red (<= 2 min / 120s)
   const isRed = secondsLeft <= 120;
   const isAmber = !isRed && secondsLeft <= 600;
 
-  const color = isRed ? '#ef4444' : isAmber ? '#f59e0b' : '#38bdf8';
+  const color = isRed
+    ? 'var(--danger)'
+    : isAmber
+    ? 'var(--warning)'
+    : 'var(--foreground)';
+
   const bgColor = isRed
-    ? 'rgba(239, 68, 68, 0.12)'
+    ? 'var(--danger-soft)'
     : isAmber
-    ? 'rgba(245, 158, 11, 0.12)'
-    : 'rgba(56, 189, 248, 0.1)';
+    ? 'var(--warning-soft)'
+    : 'var(--card)';
+
   const borderColor = isRed
-    ? 'rgba(239, 68, 68, 0.35)'
+    ? 'rgba(180, 35, 24, 0.35)'
     : isAmber
-    ? 'rgba(245, 158, 11, 0.35)'
-    : 'rgba(56, 189, 248, 0.25)';
+    ? 'rgba(161, 78, 6, 0.35)'
+    : 'var(--border)';
 
   return (
     <div
+      role="timer"
+      aria-live="off"
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: '6px',
-        padding: '0.35rem 0.75rem',
-        borderRadius: '6px',
+        gap: '7px',
+        padding: '4px 14px',
+        height: '32px',
+        borderRadius: '9999px',
         background: bgColor,
         border: `1px solid ${borderColor}`,
         color: color,
         fontWeight: 600,
-        fontFamily: 'var(--font-mono)',
-        fontSize: '0.85rem',
-        letterSpacing: '0.04em',
-        transition: 'all 0.3s ease',
+        fontSize: '0.875rem',
+        letterSpacing: '0.01em',
+        transition: 'all 0.25s ease-out',
+        userSelect: 'none',
+        boxShadow: '0 1px 3px 0 rgb(23 43 42 / 0.07)',
       }}
       title={`Time remaining: ${formattedTime}`}
     >
-      <Clock size={14} className={isRed ? 'animate-pulse-glow' : undefined} />
-      <span>{formattedTime}</span>
+      <Timer size={15} className={isRed ? 'animate-pulse-glow' : undefined} style={{ flexShrink: 0, opacity: 0.9 }} />
+      <span style={{ fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>
+        {formattedTime}
+      </span>
+      <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.78rem', fontWeight: 500, opacity: 0.85 }}>
+        left
+      </span>
     </div>
   );
 };

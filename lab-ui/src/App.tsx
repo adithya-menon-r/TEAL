@@ -2,30 +2,35 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { GatewayInfo, ToastMessage } from './types';
 import { TopBar } from './components/TopBar';
 import { RightPanel } from './components/RightPanel';
-import { FilesModal } from './components/FilesModal';
 import { EndModal } from './components/EndModal';
 import { LabEndedOverlay } from './components/LabEndedOverlay';
 import { ToastContainer } from './components/ToastContainer';
+import { LogoMark } from './components/LogoMark';
+import { Loader2 } from 'lucide-react';
+import { usePageTitle } from './hooks/usePageTitle';
 
 export const App: React.FC = () => {
   const [gatewayInfo, setGatewayInfo] = useState<GatewayInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isPanelOpen, setIsPanelOpen] = useState(true);
-  const [isFilesOpen, setIsFilesOpen] = useState(false);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
   const [isEndModalOpen, setIsEndModalOpen] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
   const [endedState, setEndedState] = useState<{
     ended: boolean;
     reason: 'user' | 'expired' | 'disconnected';
-    costUsd: number | null;
   }>({
     ended: false,
     reason: 'user',
-    costUsd: null,
   });
 
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const endedRef = useRef(false);
+
+  // Set document title matching the TEAL site style: "Lab Environment · TEAL"
+  const labTitle = gatewayInfo?.lab?.name && gatewayInfo.lab.name !== 'Your course lab'
+    ? `${gatewayInfo.lab.name} · TEAL`
+    : 'Lab Environment · TEAL';
+  usePageTitle(labTitle);
 
   const addToast = (type: 'info' | 'warning' | 'danger', title: string, message: string) => {
     const id = `${Date.now()}-${Math.random()}`;
@@ -41,6 +46,8 @@ export const App: React.FC = () => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
+  const isDevFallbackRef = useRef(false);
+
   // 1. Fetch lab metadata
   useEffect(() => {
     fetch('/__teal/info')
@@ -54,19 +61,20 @@ export const App: React.FC = () => {
       })
       .catch((err) => {
         console.warn('Unable to load /__teal/info (dev fallback)', err);
-        // Fallback for standalone preview
+        isDevFallbackRef.current = true;
+        // Fallback matching design specs
         setGatewayInfo({
-          sessionId: 'dev-preview',
-          expiresAt: new Date(Date.now() + 50 * 60 * 1000).toISOString(),
+          sessionId: 'session-live',
+          expiresAt: new Date(Date.now() + 59 * 60 * 1000 + 11 * 1000).toISOString(),
           lab: {
-            name: 'Linux Lab',
-            description: 'A clean Ubuntu shell with common command-line and build tools.',
+            name: 'Your course lab',
+            description: 'Course tools, preinstalled.',
             interface: 'terminal',
-            tools: ['Ubuntu 24.04', 'bash', 'gcc', 'python3', 'git', 'tmux', 'curl'],
+            tools: ['GHC 9.x', 'GHCi', 'cabal', 'stack', 'vim', 'nano', 'git'],
             cpu: '1',
-            memory: '1Gi',
+            memory: '2Gi',
           },
-          dashboardUrl: 'https://teal.example.com',
+          dashboardUrl: '/',
         });
         setLoading(false);
       });
@@ -75,7 +83,7 @@ export const App: React.FC = () => {
   // 2. Health check polling (§4.4: every 15s to notice if deleted)
   useEffect(() => {
     const checkHealth = async () => {
-      if (endedRef.current) return;
+      if (endedRef.current || isDevFallbackRef.current) return;
       try {
         const res = await fetch('/__teal/healthz');
         if (!res.ok) {
@@ -83,16 +91,14 @@ export const App: React.FC = () => {
           setEndedState({
             ended: true,
             reason: res.status === 410 ? 'expired' : 'disconnected',
-            costUsd: null,
           });
         }
       } catch {
-        if (!endedRef.current) {
+        if (!endedRef.current && !isDevFallbackRef.current) {
           endedRef.current = true;
           setEndedState({
             ended: true,
             reason: 'disconnected',
-            costUsd: null,
           });
         }
       }
@@ -125,7 +131,6 @@ export const App: React.FC = () => {
     setEndedState({
       ended: true,
       reason: 'expired',
-      costUsd: null,
     });
   }, []);
 
@@ -134,20 +139,17 @@ export const App: React.FC = () => {
     setIsEnding(true);
     endedRef.current = true;
     try {
-      const res = await fetch('/__teal/end', {
+      await fetch('/__teal/end', {
         method: 'POST',
       });
-      const data = await res.json();
       setEndedState({
         ended: true,
         reason: 'user',
-        costUsd: typeof data.costUsd === 'number' ? data.costUsd : 0,
       });
     } catch {
       setEndedState({
         ended: true,
         reason: 'user',
-        costUsd: 0,
       });
     } finally {
       setIsEnding(false);
@@ -158,17 +160,44 @@ export const App: React.FC = () => {
   if (loading || !gatewayInfo) {
     return (
       <div
+        role="status"
+        aria-live="polite"
         style={{
           height: '100vh',
+          width: '100vw',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'var(--bg-main)',
-          color: 'var(--text-muted)',
-          fontSize: '0.9rem',
+          background: 'var(--card)',
+          gap: '16px',
         }}
       >
-        Initializing TEAL environment...
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <LogoMark style={{ width: '42px', height: '42px' }} className="animate-pulse-glow" />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+          <span
+            className="mono-label"
+            style={{
+              fontSize: '0.75rem',
+              letterSpacing: '0.12em',
+              color: 'var(--foreground)',
+              fontWeight: 600,
+            }}
+          >
+            Initializing Environment
+          </span>
+          <span
+            style={{
+              fontSize: '0.8125rem',
+              color: 'var(--muted-foreground)',
+              fontFamily: 'var(--font-sans)',
+            }}
+          >
+            Setting up your secure container...
+          </span>
+        </div>
       </div>
     );
   }
@@ -178,13 +207,10 @@ export const App: React.FC = () => {
     gatewayInfo.lab.interface === 'jupyter' ? '/jupyter/lab' : '/terminal/';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', background: 'var(--background)' }}>
       <TopBar
         labInfo={gatewayInfo.lab}
         expiresAt={gatewayInfo.expiresAt}
-        isPanelOpen={isPanelOpen}
-        onTogglePanel={() => setIsPanelOpen((prev) => !prev)}
-        onOpenFiles={() => setIsFilesOpen(true)}
         onTriggerEnd={() => setIsEndModalOpen(true)}
         onExpire={handleExpire}
         onWarnTenMin={handleWarnTenMin}
@@ -193,32 +219,60 @@ export const App: React.FC = () => {
 
       <div style={{ display: 'flex', flex: 1, minHeight: 0, position: 'relative' }}>
         {/* Main Interface Area (Terminal / Jupyter) */}
-        <main style={{ flex: 1, height: '100%', background: '#000', position: 'relative' }}>
+        <main
+          style={{
+            flex: 1,
+            height: '100%',
+            background: '#000000',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Centered spinner while connecting to the lab */}
+          {!iframeLoaded && (
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px',
+                color: '#94a3b8',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.85rem',
+                zIndex: 10,
+                background: '#000000',
+              }}
+            >
+              <Loader2 size={24} className="animate-spin" style={{ color: '#94a3b8' }} />
+              <span>Establishing connection...</span>
+            </div>
+          )}
+
           <iframe
             src={iframeSrc}
             title="Lab Interface"
             id="lab-iframe"
+            onLoad={() => setIframeLoaded(true)}
             style={{
               width: '100%',
               height: '100%',
               border: 'none',
               display: 'block',
-              background: '#090d16',
+              background: 'transparent',
+              position: 'relative',
+              zIndex: 2,
+              opacity: iframeLoaded ? 1 : 0,
+              transition: 'opacity 0.2s ease',
             }}
           />
         </main>
 
-        {/* Collapsible Details Panel */}
-        <RightPanel
-          labInfo={gatewayInfo.lab}
-          sessionId={gatewayInfo.sessionId}
-          expiresAt={gatewayInfo.expiresAt}
-          isOpen={isPanelOpen}
-        />
+        {/* Constantly Visible Right Details Panel (Host to File Explorer) */}
+        <RightPanel labInfo={gatewayInfo.lab} />
       </div>
-
-      {/* Files Browser Modal */}
-      <FilesModal isOpen={isFilesOpen} onClose={() => setIsFilesOpen(false)} />
 
       {/* End Lab Confirmation Modal */}
       <EndModal
@@ -235,9 +289,7 @@ export const App: React.FC = () => {
       {endedState.ended && (
         <LabEndedOverlay
           reason={endedState.reason}
-          costUsd={endedState.costUsd}
           dashboardUrl={gatewayInfo.dashboardUrl}
-          labName={gatewayInfo.lab.name}
         />
       )}
     </div>

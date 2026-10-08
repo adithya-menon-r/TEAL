@@ -1,7 +1,6 @@
 import { ArrowLeftIcon } from "lucide-react"
 import { Link } from "react-router-dom"
 
-import { Wordmark } from "@/components/brand/wordmark"
 import { FadeIn } from "@/components/motion"
 import { MonoLabel } from "@/components/mono-label"
 import { Button } from "@/components/ui/button"
