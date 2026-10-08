@@ -1,0 +1,11 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+google-cloud-run==0.10.9
+google-cloud-firestore==2.19.0
+firebase-admin==6.5.0
+google-auth==2.34.0
+# Pinned transitive deps — prevents pip backtracking across hundreds of candidates
+google-api-core==2.24.2
+google-cloud-core==2.4.3
+grpcio==1.71.2
+grpcio-status==1.71.2

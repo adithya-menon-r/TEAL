@@ -1,0 +1,35 @@
+[
+  {
+    "id": "linux",
+    "name": "Linux Lab",
+    "description": "A clean Ubuntu shell with common command-line and build tools.",
+    "image": "linux:v1",
+    "interface": "terminal",
+    "tools": ["Ubuntu 24.04", "bash", "gcc / make (build-essential)", "python3", "vim", "nano", "git", "tmux", "curl"],
+    "cpu": "1",
+    "memory": "1Gi",
+    "durationMinutes": 60
+  },
+  {
+    "id": "pfl",
+    "name": "PFL: Principles of Functional Languages",
+    "description": "Haskell toolchain installed with GHCup: compile with ghc, experiment in ghci, build projects with cabal or stack.",
+    "image": "pfl:v1",
+    "interface": "terminal",
+    "tools": ["GHC 9.x (GHCup)", "GHCi", "cabal", "stack", "GHCup", "vim", "nano", "git", "tmux"],
+    "cpu": "1",
+    "memory": "2Gi",
+    "durationMinutes": 60
+  },
+  {
+    "id": "nndl",
+    "name": "NNDL Lab",
+    "description": "JupyterLab with TensorFlow (CPU) and Keras.",
+    "image": "nndl:v1",
+    "interface": "jupyter",
+    "tools": ["Python 3.12", "JupyterLab", "TensorFlow (CPU)", "Keras", "numpy", "pandas", "matplotlib", "scikit-learn"],
+    "cpu": "2",
+    "memory": "4Gi",
+    "durationMinutes": 60
+  }
+]
