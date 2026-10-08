@@ -29,4 +29,4 @@ USER student
 WORKDIR /home/student/work
 
 ENTRYPOINT ["/opt/teal-gateway/venv/bin/python", "-m", "teal_gateway", "--upstream=http://127.0.0.1:8888", "--prefix=/jupyter", "--", \
-            "jupyter", "lab", "--ip=127.0.0.1", "--port=8888", "--ServerApp.base_url=/jupyter/", "--IdentityProvider.token=", "--ServerApp.password=", "--ServerApp.root_dir=/home/student/work", "--no-browser"]
+            "jupyter", "lab", "--ip=127.0.0.1", "--port=8888", "--ServerApp.allow_remote_access=True", "--ServerApp.allow_origin='*'", "--ServerApp.base_url=/jupyter/", "--IdentityProvider.token=", "--ServerApp.password=", "--ServerApp.root_dir=/home/student/work", "--no-browser"]

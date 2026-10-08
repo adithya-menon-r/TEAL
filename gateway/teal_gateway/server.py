@@ -449,12 +449,7 @@ class GatewayApp:
         if self._is_expired():
             return web.Response(status=410, text="Lab session has expired", content_type="text/plain")
 
-        # Strip prefix from request path to get upstream relative path
-        rel_path = request.path[len(self.prefix):]
-        if not rel_path.startswith("/"):
-            rel_path = "/" + rel_path
-
-        target_url = f"{self.upstream_url}{rel_path}"
+        target_url = f"{self.upstream_url}{request.path}"
         return await forward_request(request, target_url, self.session)
 
     async def handle_root(self, request: web.Request) -> web.Response:

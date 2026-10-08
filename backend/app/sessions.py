@@ -194,7 +194,7 @@ def launch(uid: str, email: str, template: dict) -> dict[str, Any]:
         provisioner.create(session_id, template, env_vars)
     except Exception as exc:
         logger.error("provision failed session=%s: %s", session_id, exc)
-        _end_session(session_id, uid, "failed", now)
+        end({"sessionId": session_id, "uid": uid}, "failed")
         raise RuntimeError(f"provision_failed:{exc}") from exc
 
     logger.info(

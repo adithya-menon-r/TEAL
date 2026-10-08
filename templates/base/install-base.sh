@@ -28,7 +28,15 @@ chmod +x /usr/local/bin/ttyd
 
 echo "=== [TEAL] Creating student user (UID 1000, no sudo) ==="
 if ! id -u student >/dev/null 2>&1; then
-    useradd -m -u 1000 -s /bin/bash student
+    # Ubuntu 24.04 creates an 'ubuntu' user with UID 1000 by default.
+    # If UID 1000 exists, rename it to 'student'.
+    if id -nu 1000 >/dev/null 2>&1; then
+        EXISTING_USER=$(id -nu 1000)
+        groupmod -n student "$EXISTING_USER" 2>/dev/null || true
+        usermod -l student -m -d /home/student "$EXISTING_USER"
+    else
+        useradd -m -u 1000 -s /bin/bash student
+    fi
 fi
 
 mkdir -p /home/student/work
