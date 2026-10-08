@@ -35,36 +35,27 @@ logger = logging.getLogger(__name__)
 firebase_app = firebase_admin.initialize_app()
 
 # FastAPI's built-in Bearer token extractor
-_bearer = HTTPBearer(auto_error=True)
+_bearer = HTTPBearer(auto_error=False)
 
 
-class CurrentUser:
-    """Typed container for the authenticated user info."""
-
-    __slots__ = ("uid", "email")
-
-    def __init__(self, uid: str, email: str) -> None:
-        self.uid = uid
-        self.email = email
-
-
-async def get_current_user(
-    creds: HTTPAuthorizationCredentials = Security(_bearer),
-) -> CurrentUser:
+def current_user(
+    creds: HTTPAuthorizationCredentials | None = Security(_bearer),
+) -> dict:
     """
     FastAPI dependency. Raises HTTP 401/403 on any auth failure.
-    Use as: user: CurrentUser = Depends(get_current_user)
+    Use as: user: dict = Depends(current_user)
     """
+    if not creds:
+        raise HTTPException(
+            status_code=401,
+            detail={"error": "missing_token", "message": "Authentication token is missing."},
+        )
+
     token = creds.credentials
 
     # 1. Verify the Firebase ID token
     try:
-        decoded = fb_auth.verify_id_token(token, app=firebase_app, check_revoked=True)
-    except fb_auth.RevokedIdTokenError:
-        raise HTTPException(
-            status_code=401,
-            detail={"error": "token_revoked", "message": "Token has been revoked. Please log in again."},
-        )
+        decoded = fb_auth.verify_id_token(token, app=firebase_app, check_revoked=False)
     except fb_auth.ExpiredIdTokenError:
         raise HTTPException(
             status_code=401,
@@ -100,4 +91,4 @@ async def get_current_user(
 
     uid: str = decoded["uid"]
     logger.debug("Authenticated uid=%s email=%s", uid, email)
-    return CurrentUser(uid=uid, email=email)
+    return {"uid": uid, "email": email}

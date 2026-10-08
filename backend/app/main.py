@@ -19,23 +19,27 @@ import logging
 import logging.config
 import os
 
-import google.auth.transport.requests
-import google.oauth2.id_token
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from .auth import CurrentUser, get_current_user
+from .auth import current_user
 from .catalog import get_template, get_templates, load_catalog
 from .config import settings
 from . import sessions
+
+try:
+    from . import reaper, history
+except ImportError:
+    reaper = None
+    history = None
 
 # ---------------------------------------------------------------------------
 # Structured JSON logging
 # ---------------------------------------------------------------------------
 logging.basicConfig(
     level=logging.INFO,
-    format='{"time":"%(asctime)s","level":"%(levelname)s","logger":"%(name)s","msg":%(message)s}',
+    format='{"time":"%(asctime)s","severity":"%(levelname)s","logger":"%(name)s","msg":%(message)s}',
 )
 logger = logging.getLogger("teal.api")
 
@@ -53,12 +57,16 @@ app.add_middleware(
     allow_credentials=False,
 )
 
+if reaper and history:
+    app.include_router(reaper.router)
+    app.include_router(history.router)
+    app.dependency_overrides[history.get_current_user] = current_user
 
 # ---------------------------------------------------------------------------
 # Startup
 # ---------------------------------------------------------------------------
 @app.on_event("startup")
-async def startup() -> None:
+def startup() -> None:
     load_catalog()
     logger.info('"teal-api started"')
 
@@ -78,12 +86,12 @@ def _err(status: int, code: str, message: str) -> JSONResponse:
 # ---------------------------------------------------------------------------
 
 @app.get("/api/me")
-async def me(user: CurrentUser = Depends(get_current_user)) -> dict:
-    return {"email": user.email, "uid": user.uid}
+def me(user: dict = Depends(current_user)) -> dict:
+    return {"email": user["email"], "uid": user["uid"]}
 
 
 @app.get("/api/templates")
-async def templates_list(user: CurrentUser = Depends(get_current_user)) -> dict:
+def templates_list() -> dict:
     tmpl = get_templates()
     # Strip internal-only fields before sending
     public_fields = (
@@ -99,22 +107,22 @@ async def templates_list(user: CurrentUser = Depends(get_current_user)) -> dict:
 
 
 @app.get("/api/session")
-async def get_session(user: CurrentUser = Depends(get_current_user)) -> dict:
-    session = sessions.get_active_session(user.uid)
+def get_session(user: dict = Depends(current_user)) -> dict:
+    session = sessions.get_active_session(user["uid"])
     if session is None:
         return {"session": None}
 
     # If still starting, do a ready-check
     if session.get("status") == "starting":
-        session = sessions.ready_check(session["id"], user.uid)
+        session = sessions.ready_check(session["id"], user["uid"])
 
     return {"session": session}
 
 
 @app.post("/api/sessions", status_code=202)
-async def create_session(
+def create_session(
     body: dict,
-    user: CurrentUser = Depends(get_current_user),
+    user: dict = Depends(current_user),
 ) -> dict:
     template_id = body.get("templateId", "")
     template = get_template(template_id)
@@ -122,12 +130,12 @@ async def create_session(
         return _err(404, "unknown_template", f"No template with id '{template_id}'.")
 
     try:
-        session = sessions.launch(user.uid, user.email, template)
+        session = sessions.launch(user["uid"], user["email"], template)
     except ValueError as exc:
         msg = str(exc)
         if msg.startswith("active_session:"):
             existing_id = msg.split(":", 1)[1]
-            existing = sessions.get_active_session(user.uid)
+            existing = sessions.get_active_session(user["uid"])
             return JSONResponse(
                 status_code=409,
                 content={"error": "active_session", "session": existing},
@@ -144,22 +152,16 @@ async def create_session(
 
 
 @app.delete("/api/session")
-async def delete_session(user: CurrentUser = Depends(get_current_user)) -> dict:
+def delete_session(user: dict = Depends(current_user)) -> dict:
     try:
-        session = sessions.end_session(user.uid, reason="user")
+        session = sessions.end_session(user["uid"], reason="user")
     except KeyError:
         return _err(404, "no_active_session", "You have no active lab session.")
     return {"session": session}
 
 
-@app.get("/api/sessions/history")
-async def session_history(user: CurrentUser = Depends(get_current_user)) -> dict:
-    history = sessions.get_history(user.uid)
-    return {"sessions": history}
-
-
 @app.post("/api/labs/{session_id}/end")
-async def lab_end_callback(
+def lab_end_callback(
     session_id: str,
     request: Request,
     authorization: str = Header(default=""),
@@ -183,41 +185,21 @@ async def lab_end_callback(
     return {"costUsd": session.get("costUsd", 0.0)}
 
 
-@app.post("/internal/reap")
-async def reap(request: Request) -> dict:
-    """
-    Called by Cloud Scheduler every minute (§9.4).
-    Auth: OIDC token from teal-scheduler@ with audience=PUBLIC_URL.
-    """
-    auth_header = request.headers.get("Authorization", "")
-    if not auth_header.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail={"error": "missing_token"})
-
-    oidc_token = auth_header[7:]
-    try:
-        http_request = google.auth.transport.requests.Request()
-        claim = google.oauth2.id_token.verify_oauth2_token(
-            oidc_token, http_request, audience=settings.PUBLIC_URL
-        )
-    except Exception as exc:
-        logger.warning("reap: OIDC verification failed: %s", exc)
-        raise HTTPException(status_code=401, detail={"error": "invalid_oidc_token"})
-
-    # Verify the caller is the scheduler service account
-    caller_email = claim.get("email", "")
-    if caller_email != settings.SCHEDULER_SA:
-        logger.warning("reap: wrong caller email=%s", caller_email)
-        raise HTTPException(status_code=403, detail={"error": "wrong_caller"})
-
-    counts = sessions.reap()
-    return counts
-
-
 # ---------------------------------------------------------------------------
 # Global exception handler — ensure error shape is consistent
 # ---------------------------------------------------------------------------
+@app.exception_handler(HTTPException)
+def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    if isinstance(exc.detail, dict):
+        return JSONResponse(status_code=exc.status_code, content=exc.detail)
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": "http_error", "message": str(exc.detail)},
+    )
+
+
 @app.exception_handler(Exception)
-async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     logger.exception("Unhandled exception on %s %s", request.method, request.url)
     return JSONResponse(
         status_code=500,
