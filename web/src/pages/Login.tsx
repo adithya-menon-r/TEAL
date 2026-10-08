@@ -13,8 +13,10 @@ import { EMAIL_DOMAIN_HINT, emailError } from "@/lib/email"
 import { isMock } from "@/lib/env"
 import { DEMO_EMAIL, DEMO_PASSWORD } from "@/lib/mock/constants"
 import { collapse } from "@/lib/motion"
+import { usePageTitle } from "@/hooks/use-page-title"
 
 export default function LoginPage() {
+  usePageTitle("Log in · TEAL")
   const { signIn } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")

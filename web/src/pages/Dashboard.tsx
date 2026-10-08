@@ -11,6 +11,7 @@ import { Notice } from "@/components/notice"
 import { Button } from "@/components/ui/button"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { useApiResource } from "@/hooks/use-api-resource"
+import { usePageTitle } from "@/hooks/use-page-title"
 import { isActiveSession, useLabSession } from "@/hooks/use-lab-session"
 import { apiErrorMessage, getHistory, getTemplates, isApiError } from "@/lib/api"
 import { formatUsd } from "@/lib/format"
@@ -80,6 +81,7 @@ function SectionHeader({
 }
 
 export default function DashboardPage() {
+  usePageTitle("Dashboard · TEAL")
 
   const lab = useLabSession()
   const templates = useApiResource(getTemplates)

@@ -12,6 +12,7 @@ import { RESEND_COOLDOWN_KEY, RESEND_COOLDOWN_SECONDS, useCooldown } from "@/hoo
 import { authErrorMessage } from "@/lib/auth-errors"
 import { formatCountdown } from "@/lib/format"
 import { collapse } from "@/lib/motion"
+import { usePageTitle } from "@/hooks/use-page-title"
 
 /** Animated envelope with a pulsing ring: "we're waiting for you". */
 function InboxIllustration() {
@@ -26,6 +27,7 @@ function InboxIllustration() {
 }
 
 export default function CheckInboxPage() {
+  usePageTitle("Check your inbox · TEAL")
   const { user, refresh, resendVerification, signOut } = useAuth()
   const navigate = useNavigate()
   const cooldown = useCooldown(RESEND_COOLDOWN_KEY, RESEND_COOLDOWN_SECONDS)

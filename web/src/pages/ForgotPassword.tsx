@@ -11,8 +11,10 @@ import { Button } from "@/components/ui/button"
 import { authErrorMessage } from "@/lib/auth-errors"
 import { EMAIL_DOMAIN_HINT, emailError, normalizeEmail } from "@/lib/email"
 import { collapse, transitions } from "@/lib/motion"
+import { usePageTitle } from "@/hooks/use-page-title"
 
 export default function ForgotPasswordPage() {
+  usePageTitle("Reset password · TEAL")
   const { sendPasswordReset } = useAuth()
   const location = useLocation()
   const [email, setEmail] = useState(

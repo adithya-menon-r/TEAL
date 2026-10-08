@@ -12,6 +12,7 @@ import { RESEND_COOLDOWN_KEY, RESEND_COOLDOWN_SECONDS, startCooldown } from "@/h
 import { authErrorMessage } from "@/lib/auth-errors"
 import { EMAIL_DOMAIN_HINT, emailError, MIN_PASSWORD_LENGTH } from "@/lib/email"
 import { collapse } from "@/lib/motion"
+import { usePageTitle } from "@/hooks/use-page-title"
 
 type Errors = { email?: string | null; password?: string | null; confirm?: string | null }
 
@@ -27,6 +28,7 @@ function validate(email: string, password: string, confirm: string): Errors {
 }
 
 export default function SignupPage() {
+  usePageTitle("Sign up · TEAL")
   const { signUp } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState("")
