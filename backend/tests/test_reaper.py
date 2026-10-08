@@ -394,3 +394,42 @@ def test_default_verifier_refuses_without_public_url():
     with pytest.raises(reaper.ReapError) as exc:
         reaper.get_token_verifier()("tok")
     assert exc.value.status_code == 500
+
+
+def test_firestore_camelcase_docs_are_accepted():
+    sess = FakeSessions([])
+    sess.active = [
+        {
+            "uid": "u",
+            "sessionId": "a",
+            "serviceName": "lab-a",
+            "status": "running",
+            "createdAt": NOW - timedelta(minutes=70),
+            "expiresAt": NOW - timedelta(minutes=10),
+        },
+        {
+            "uid": "v",
+            "sessionId": "b",
+            "serviceName": "lab-b",
+            "status": "running",
+            "createdAt": NOW - timedelta(minutes=10),
+            "expiresAt": NOW + timedelta(minutes=50),
+        },
+    ]
+    sess.end = lambda active, reason: sess.ended.append((active["sessionId"], reason))
+    prov = FakeProvisioner([lab("a"), lab("b")])
+    summary = reap(NOW, prov, sess)
+    assert sess.ended == [("a", "expired")]
+    assert prov.deleted == []
+    assert summary.orphans == 0
+
+
+def test_orphan_sweep_skipped_when_an_active_session_has_no_id():
+    sess = FakeSessions([])
+    sess.active = [{"uid": "u", "status": "running", "createdAt": NOW - timedelta(minutes=10)}]
+    sess.end = lambda active, reason: sess.ended.append((None, reason))
+    prov = FakeProvisioner([lab("x", age=timedelta(minutes=30))])
+    summary = reap(NOW, prov, sess)
+    assert prov.deleted == []
+    assert summary.orphans == 0
+    assert summary.errors >= 1

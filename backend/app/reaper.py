@@ -109,10 +109,23 @@ def log_event(event: str, severity: str = "INFO", **fields: Any) -> None:
     logger.log(level, json.dumps(payload, default=str))
 
 
+# Firestore documents use camelCase (sessionId, createdAt, ...); accept both spellings.
+_CAMEL_KEYS = {
+    "session_id": "sessionId",
+    "service_name": "serviceName",
+    "created_at": "createdAt",
+    "expires_at": "expiresAt",
+    "create_time": "createTime",
+}
+
+
 def _field(item: Any, key: str) -> Any:
-    if isinstance(item, Mapping):
-        return item.get(key)
-    return getattr(item, key, None)
+    keys = (key, _CAMEL_KEYS[key]) if key in _CAMEL_KEYS else (key,)
+    for k in keys:
+        value = item.get(k) if isinstance(item, Mapping) else getattr(item, k, None)
+        if value is not None:
+            return value
+    return None
 
 
 def _as_utc(value: Any) -> datetime | None:
@@ -202,8 +215,14 @@ def reap(now: datetime, provisioner: Provisioner, sessions: Sessions) -> ReapSum
         if outcome is not None:
             setattr(summary, outcome, getattr(summary, outcome) + 1)
 
+    active_ids = {_field(s, "session_id") for s in active or []}
+    if None in active_ids:
+        # Without every active session's id, any lab could look like an orphan.
+        active = None
+        summary.errors += 1
+        log_event("reap.error", "ERROR", step="orphan_sweep", error="active session without session_id")
+
     if labs is not None and active is not None:
-        active_ids = {_field(s, "session_id") for s in active}
         for lab in labs:
             name = _field(lab, "name")
             try:
