@@ -1,0 +1,8 @@
+# Test/dev dependencies for teal-api.
+# The runtime libraries used by cost.py, reaper.py and history.py are listed
+# here too so the tests run on their own; requirements.txt must include them.
+fastapi>=0.115
+google-auth[requests]>=2.30
+google-cloud-firestore>=2.16
+pytest>=8.0
+httpx>=0.27
