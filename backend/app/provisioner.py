@@ -141,8 +141,8 @@ def status(service_name: str) -> tuple[bool, str | None]:
     is_ready = (
         not svc.reconciling
         and bool(svc.uri)
-        and len(svc.conditions) > 0
-        and all(c.state == run_v2.Condition.State.CONDITION_SUCCEEDED for c in svc.conditions)
+        and svc.terminal_condition
+        and svc.terminal_condition.state == run_v2.Condition.State.CONDITION_SUCCEEDED
     )
 
     return is_ready, svc.uri if is_ready else None
@@ -164,19 +164,23 @@ def delete(service_name: str) -> None:
         logger.info("provisioner.delete service=%s already gone", service_name)
 
 
-def list_labs() -> list[str]:
+def list_labs() -> list[dict]:
     """
     List all Cloud Run services labelled teal-lab=true (§9.4 step 2).
-    Returns a list of short service names like ['lab-k3j9x2m1qa', ...].
+    Returns a list of dicts with name, session_id, create_time.
     """
     client = _get_client()
     request = run_v2.ListServicesRequest(
         parent=_parent(),
     )
-    names: list[str] = []
+    labs = []
     for svc in client.list_services(request=request):
         if svc.labels.get("teal-lab") == "true":
             # Full name: projects/.../locations/.../services/lab-<id>
             short = svc.name.split("/")[-1]
-            names.append(short)
-    return names
+            labs.append({
+                "name": short,
+                "session_id": svc.labels.get("teal-session"),
+                "create_time": svc.create_time,
+            })
+    return labs

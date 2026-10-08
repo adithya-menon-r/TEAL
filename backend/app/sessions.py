@@ -31,7 +31,10 @@ from google.cloud.exceptions import NotFound as GCSNotFound
 
 from . import provisioner
 from .config import settings
-from .cost import calculate_cost
+try:
+    from . import cost
+except ImportError:
+    cost = None
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +119,7 @@ def launch(uid: str, email: str, template: dict) -> dict[str, Any]:
     db = _get_db()
 
     # Check global concurrent lab cap
-    active_count = len(db.collection("activeSessions").list_documents())
+    active_count = db.collection("activeSessions").count().get()[0][0].value
     if active_count >= settings.MAX_CONCURRENT_LABS:
         raise ValueError("capacity_full")
 
@@ -218,7 +221,14 @@ def get_active_session(uid: str) -> dict[str, Any] | None:
     session_snap = db.collection("sessions").document(session_id).get()
     if not session_snap.exists:
         return None
-    return _session_to_dict(session_snap.to_dict(), session_id)
+    doc = session_snap.to_dict()
+    result = _session_to_dict(doc, session_id)
+    if result.get("status") == "running" and not result.get("accessUrl") and doc.get("url"):
+        secret_snap = db.collection("sessionSecrets").document(session_id).get()
+        token = secret_snap.to_dict().get("plaintext", "") if secret_snap.exists else ""
+        if token:
+            result["accessUrl"] = f"{doc['url']}/#t={token}"
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -279,19 +289,62 @@ def ready_check(session_id: str, uid: str) -> dict[str, Any]:
 # End session (§9.3) — used by every end path
 # ---------------------------------------------------------------------------
 
-def _end_session(
-    session_id: str, uid: str, reason: EndReason, created_at: datetime | None = None
-) -> dict[str, Any]:
-    """Internal implementation of end logic."""
+
+def list_active() -> list[dict[str, Any]]:
+    """List all active sessions."""
+    db = _get_db()
+    results = []
+    for snap in db.collection("activeSessions").stream():
+        active = snap.to_dict()
+        active["uid"] = snap.id
+        results.append(active)
+    return results
+
+def check_ready(active: dict[str, Any]) -> bool:
+    """Readiness check used by the reaper."""
+    session_id = active["sessionId"]
+    uid = active["uid"]
+    db = _get_db()
+    session_ref = db.collection("sessions").document(session_id)
+    snap = session_ref.get()
+    if not snap.exists:
+        return False
+    doc = snap.to_dict()
+    if doc.get("status") != "starting":
+        return False
+
+    service_name = doc.get("serviceName", f"lab-{session_id}")
+    is_ready, url = provisioner.status(service_name)
+    if not is_ready:
+        return False
+
+    now = _now()
+    session_ref.update({"status": "running", "readyAt": now, "url": url})
+    db.collection("activeSessions").document(uid).update({
+        "status": "running", "url": url
+    })
+    return True
+
+def end(active: dict[str, Any], reason: EndReason) -> dict[str, Any]:
+    """
+    End an active session. Sets status to ending on both docs, deletes service.
+    If delete succeeds, marks as ended.
+    """
+    session_id = active.get("sessionId", "")
+    uid = active.get("uid", "")
+    if not session_id or not uid:
+        raise KeyError("Invalid active dict")
+
     db = _get_db()
     session_ref = db.collection("sessions").document(session_id)
     active_ref = db.collection("activeSessions").document(uid)
     secret_ref = db.collection("sessionSecrets").document(session_id)
 
-    # Mark as 'ending'
+    # Set ending on both docs
     session_ref.update({"status": "ending"})
+    if active_ref.get().exists:
+        active_ref.update({"status": "ending"})
 
-    # Delete the Cloud Run service (step 2)
     snap = session_ref.get()
     doc = snap.to_dict() if snap.exists else {}
     service_name = doc.get("serviceName", f"lab-{session_id}")
@@ -299,79 +352,59 @@ def _end_session(
     try:
         provisioner.delete(service_name)
     except Exception as exc:
-        logger.error(
-            "provisioner.delete failed session=%s service=%s: %s",
-            session_id, service_name, exc,
-        )
-        # Don't re-raise — reaper will retry
+        logger.error("provisioner.delete failed session=%s service=%s: %s", session_id, service_name, exc)
+        return _session_to_dict(doc, session_id)
 
     now = _now()
-    ca = created_at or doc.get("createdAt") or now
+    ca = doc.get("createdAt") or now
     cpu = doc.get("cpu", "1")
     memory = doc.get("memoryGiB", "1Gi")
 
-    if isinstance(ca, datetime):
-        cost = calculate_cost(cpu, memory, ca, now)
-    else:
-        cost = 0.0
+    cost_val = 0.0
+    if isinstance(ca, datetime) and cost:
+        cost_val = cost.session_cost(cpu, memory, ca, now)
 
-    # Batch update (step 3)
     batch = db.batch()
     batch.update(session_ref, {
         "status": "ended",
         "endReason": reason,
         "endedAt": now,
-        "costUsd": cost,
+        "costUsd": cost_val,
     })
     batch.delete(active_ref)
     batch.delete(secret_ref)
     batch.commit()
 
-    logger.info(
-        '{"event":"lab.end","session":"%s","reason":"%s","cost_usd":%.6f}',
-        session_id, reason, cost,
-    )
-
-    doc.update({"status": "ended", "endReason": reason, "endedAt": now, "costUsd": cost})
+    logger.info('{"event":"lab.end","session":"%s","reason":"%s","cost_usd":%.6f}', session_id, reason, cost_val)
+    doc.update({"status": "ended", "endReason": reason, "endedAt": now, "costUsd": cost_val})
     return _session_to_dict(doc, session_id)
 
 
 def end_session(uid: str, reason: EndReason = "user") -> dict[str, Any]:
-    """
-    End the active session for uid (called from DELETE /api/session).
-    Raises KeyError if no active session exists.
-    """
     db = _get_db()
     snap = db.collection("activeSessions").document(uid).get()
     if not snap.exists:
         raise KeyError("no_active_session")
-    session_id = snap.to_dict()["sessionId"]
-    return _end_session(session_id, uid, reason)
+    active = snap.to_dict()
+    active["uid"] = uid
+    return end(active, reason)
 
 
 def end_session_by_id(session_id: str, reason: EndReason) -> dict[str, Any]:
-    """
-    End a specific session by ID (used by reaper and lab callback).
-    """
     db = _get_db()
     snap = db.collection("sessions").document(session_id).get()
     if not snap.exists:
         raise KeyError(session_id)
-    uid = snap.to_dict().get("uid", "")
-    return _end_session(session_id, uid, reason)
+    doc = snap.to_dict()
+    uid = doc.get("uid", "")
+    active_snap = db.collection("activeSessions").document(uid).get()
+    active = active_snap.to_dict() if active_snap.exists else {"sessionId": session_id, "uid": uid}
+    active["uid"] = uid
+    return end(active, reason)
 
-
-# ---------------------------------------------------------------------------
-# Lab token verification (§6.3, used by POST /api/labs/{id}/end)
-# ---------------------------------------------------------------------------
 
 def verify_lab_token(session_id: str, token: str) -> bool:
-    """
-    Return True if the token matches the stored hash for this session.
-    Uses constant-time comparison.
-    """
     import hmac as _hmac
-
     db = _get_db()
     snap = db.collection("sessionSecrets").document(session_id).get()
     if not snap.exists:
@@ -379,134 +412,3 @@ def verify_lab_token(session_id: str, token: str) -> bool:
     stored_hash = snap.to_dict().get("token", "")
     provided_hash = hashlib.sha256(token.encode()).hexdigest()
     return _hmac.compare_digest(stored_hash, provided_hash)
-
-
-# ---------------------------------------------------------------------------
-# Session history (§8.1 GET /api/sessions/history)
-# ---------------------------------------------------------------------------
-
-def get_history(uid: str, limit: int = 10) -> list[dict[str, Any]]:
-    """Return the last `limit` sessions for uid, newest first."""
-    db = _get_db()
-    query = (
-        db.collection("sessions")
-        .where("uid", "==", uid)
-        .order_by("createdAt", direction=firestore.Query.DESCENDING)
-        .limit(limit)
-    )
-    results = []
-    for snap in query.stream():
-        results.append(_session_to_dict(snap.to_dict(), snap.id))
-    return results
-
-
-# ---------------------------------------------------------------------------
-# Reaper (§9.4) — called by POST /internal/reap
-# ---------------------------------------------------------------------------
-
-def reap() -> dict[str, int]:
-    """
-    Scan activeSessions and reconcile with running Cloud Run services.
-    Returns counts: {expired, failed, deleted, orphans}.
-    """
-    db = _get_db()
-    now = _now()
-
-    counts = {"expired": 0, "failed": 0, "deleted": 0, "orphans": 0}
-
-    # List all lab services once
-    try:
-        live_services = set(provisioner.list_labs())
-    except Exception as exc:
-        logger.error("reaper: list_labs failed: %s", exc)
-        live_services = set()
-
-    active_sessions = {}
-    for snap in db.collection("activeSessions").stream():
-        active_sessions[snap.id] = snap.to_dict()
-
-    for uid, active in active_sessions.items():
-        session_id = active.get("sessionId", "")
-        status = active.get("status", "")
-        created_at = active.get("createdAt")
-        expires_at = active.get("expiresAt")
-        service_name = active.get("serviceName", f"lab-{session_id}")
-
-        # Normalise timestamps
-        if isinstance(expires_at, datetime) and expires_at.tzinfo is None:
-            expires_at = expires_at.replace(tzinfo=timezone.utc)
-        if isinstance(created_at, datetime) and created_at.tzinfo is None:
-            created_at = created_at.replace(tzinfo=timezone.utc)
-
-        try:
-            if status == "starting":
-                # Check if ready; if still starting after 5 min → failed
-                _do_ready_check(db, session_id, uid)
-                age = (now - created_at).total_seconds() if created_at else 0
-                if age > 300:
-                    logger.warning("reaper: session=%s still starting after 5m, marking failed", session_id)
-                    end_session_by_id(session_id, "failed")
-                    counts["failed"] += 1
-
-            elif status == "ending":
-                # Retry the end
-                end_session_by_id(session_id, "deleted")
-                counts["deleted"] += 1
-
-            elif expires_at and now > expires_at:
-                end_session_by_id(session_id, "expired")
-                counts["expired"] += 1
-
-            elif status == "running":
-                # Service missing from live list and session is > 2 min old
-                age = (now - created_at).total_seconds() if created_at else 0
-                if service_name not in live_services and age > 120:
-                    logger.info("reaper: session=%s service gone externally", session_id)
-                    end_session_by_id(session_id, "deleted")
-                    counts["deleted"] += 1
-
-        except Exception as exc:
-            logger.error("reaper: error handling session=%s: %s", session_id, exc)
-
-    # Orphan sweep: lab services with no active session, older than 2 min
-    active_service_names = {
-        v.get("serviceName", "") for v in active_sessions.values()
-    }
-    for service_name in live_services:
-        if service_name not in active_service_names:
-            # Check age via the service's label / creation time isn't available
-            # from list — use a simple heuristic: always delete unknown services
-            logger.info("reaper: orphan service=%s, deleting", service_name)
-            try:
-                provisioner.delete(service_name)
-                counts["orphans"] += 1
-            except Exception as exc:
-                logger.error("reaper: could not delete orphan %s: %s", service_name, exc)
-
-    logger.info(
-        '{"event":"reap.summary","expired":%d,"failed":%d,"deleted":%d,"orphans":%d}',
-        counts["expired"], counts["failed"], counts["deleted"], counts["orphans"],
-    )
-    return counts
-
-
-def _do_ready_check(db: firestore.Client, session_id: str, uid: str) -> None:
-    """Internal ready check used by the reaper."""
-    session_ref = db.collection("sessions").document(session_id)
-    snap = session_ref.get()
-    if not snap.exists:
-        return
-    doc = snap.to_dict()
-    if doc["status"] != "starting":
-        return
-
-    service_name = doc["serviceName"]
-    is_ready, url = provisioner.status(service_name)
-    if not is_ready:
-        return
-
-    now = _now()
-    session_ref.update({"status": "running", "readyAt": now, "url": url})
-    db.collection("activeSessions").document(uid).update({
-        "status": "running", "url": url
-    })
