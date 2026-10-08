@@ -37,10 +37,32 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # Structured JSON logging
 # ---------------------------------------------------------------------------
-logging.basicConfig(
-    level=logging.INFO,
-    format='{"time":"%(asctime)s","severity":"%(levelname)s","logger":"%(name)s","msg":%(message)s}',
-)
+class _JsonFormatter(logging.Formatter):
+    """One JSON object per line; messages that are already JSON objects are merged in."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        entry = {
+            "time": self.formatTime(record),
+            "severity": record.levelname,
+            "logger": record.name,
+        }
+        message = record.getMessage()
+        try:
+            parsed = json.loads(message)
+        except ValueError:
+            parsed = None
+        if isinstance(parsed, dict):
+            entry.update(parsed)
+        else:
+            entry["message"] = message
+        if record.exc_info:
+            entry["exception"] = self.formatException(record.exc_info)
+        return json.dumps(entry, default=str)
+
+
+_handler = logging.StreamHandler()
+_handler.setFormatter(_JsonFormatter())
+logging.basicConfig(level=logging.INFO, handlers=[_handler])
 logger = logging.getLogger("teal.api")
 
 # ---------------------------------------------------------------------------
