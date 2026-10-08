@@ -27,7 +27,7 @@ export function AuthLayout({ eyebrow, title, description, children, footer, medi
       <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-5 sm:px-6">
         <Link
           to="/"
-          className="rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/35"
+          className="flex items-center rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/35"
         >
           <Wordmark />
         </Link>

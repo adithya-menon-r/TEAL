@@ -1,6 +1,6 @@
-import { CloudIcon } from "lucide-react"
 import { Link } from "react-router-dom"
 
+import { GoogleCloudLogo } from "@/components/brand/google-cloud-logo"
 import { Wordmark } from "@/components/brand/wordmark"
 import { AuthCtas } from "@/components/landing/site-nav"
 import { Reveal } from "@/components/motion"
@@ -45,10 +45,6 @@ export function SiteFooter() {
             Temporary Environments for Academic Labs. Ready-to-use course labs in the browser for
             Amrita students.
           </p>
-          <span className="inline-flex w-fit items-center gap-2 rounded-full border bg-card px-3 py-1 font-mono text-[0.6875rem] text-muted-foreground">
-            <CloudIcon className="size-3.5 text-primary-ink" aria-hidden />
-            Built on Google Cloud Run
-          </span>
         </div>
 
         <nav aria-label="Footer" className="grid grid-cols-2 gap-x-12 gap-y-2 text-sm">
@@ -67,9 +63,12 @@ export function SiteFooter() {
         </nav>
       </div>
       <div className="border-t">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <span>© {new Date().getFullYear()} TEAL. A student cloud computing project.</span>
-          <span className="font-mono">Labs last 60 min · files are deleted when a lab ends</span>
+        <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-2 px-4 py-5 text-center text-xs text-muted-foreground sm:px-6">
+          <span className="inline-flex items-center gap-2 font-mono">
+            <GoogleCloudLogo className="size-4" />
+            Built on Google Cloud Platform
+          </span>
+          <span>© {new Date().getFullYear()} TEAL</span>
         </div>
       </div>
     </footer>

@@ -33,7 +33,7 @@ export function AppShell() {
         <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-3 px-4 sm:px-6">
           <Link
             to="/dashboard"
-            className="shrink-0 rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/35"
+            className="flex shrink-0 items-center rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/35"
           >
             <Wordmark tagline />
           </Link>
@@ -74,9 +74,8 @@ export function AppShell() {
       </main>
 
       <footer className="border-t">
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-5 text-xs text-muted-foreground sm:px-6">
-          <span>TEAL · Temporary Environments for Academic Labs</span>
-          <span className="font-mono">Labs last 60 min · files are deleted when a lab ends</span>
+        <div className="mx-auto w-full max-w-6xl px-4 py-5 text-center text-xs text-muted-foreground sm:px-6">
+          <span>© {new Date().getFullYear()} TEAL</span>
         </div>
       </footer>
     </div>

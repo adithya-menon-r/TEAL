@@ -20,7 +20,7 @@ const FEATURES = [
   {
     icon: MonitorSmartphoneIcon,
     title: "Works on any OS",
-    body: "Windows, macOS or Linux, on a lab PC or your own laptop. Same environment everywhere.",
+    body: "Any OS, on a lab PC or your own laptop. Same environment everywhere.",
     tag: "any browser",
   },
   {
@@ -56,7 +56,7 @@ export function Features() {
         <SectionHeading
           eyebrow="Why TEAL"
           title="Built for lab hours, not for setup"
-          description="Spend the session on the exercise, not on getting GHC or TensorFlow to install."
+          description="Spend the session on the exercise, not on getting the tools your course needs to install."
         />
 
         <Stagger

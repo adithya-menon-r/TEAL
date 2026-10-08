@@ -25,7 +25,7 @@ export function AuthCtas({
   size?: "default" | "sm" | "lg"
   className?: string
   /** What the secondary button does when signed out. */
-  secondary?: "login" | "labs" | "none"
+  secondary?: "login" | "none"
   onNavigate?: () => void
 }) {
   const { user, loading } = useAuth()
@@ -46,13 +46,6 @@ export function AuthCtas({
           <ArrowRightIcon className="transition-transform duration-150 group-hover/button:translate-x-0.5" />
         </Link>
       </Button>
-      {!signedIn && secondary === "labs" && (
-        <Button asChild variant="outline" size={size}>
-          <a href="#labs" onClick={onNavigate}>
-            See the labs
-          </a>
-        </Button>
-      )}
     </div>
   )
 }
@@ -99,7 +92,7 @@ export function SiteNav() {
         <Link
           to="/"
           onClick={() => window.scrollTo({ top: 0 })}
-          className="rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/35"
+          className="flex items-center rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/35"
         >
           <Wordmark />
         </Link>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { motion, useInView, useReducedMotion } from "motion/react"
-import { CheckIcon, FolderDownIcon, LockIcon } from "lucide-react"
+import { CheckIcon, FolderDownIcon, LockIcon, MaximizeIcon, MinusIcon, XIcon } from "lucide-react"
 
 import { LogoMark } from "@/components/brand/wordmark"
 import { Countdown } from "@/components/countdown"
@@ -15,7 +15,7 @@ type Step =
   | { kind: "out"; text: string; wait: number }
 
 const SCRIPT: Step[] = [
-  { kind: "status", text: "Creating lab-pfl", wait: 650 },
+  { kind: "status", text: "Creating your lab", wait: 650 },
   { kind: "status", text: "Starting container", wait: 900 },
   { kind: "ready", text: "Ready in 21s · 1 vCPU · 2 GiB", wait: 700 },
   { kind: "cmd", prompt: "student@teal:~$", text: "ghci", wait: 450 },
@@ -34,7 +34,7 @@ const CLAY = "text-[#e3b096]"
 
 /**
  * Faux browser window showing a TEAL lab page whose terminal "types" a short
- * PFL session, then loops. Pure HTML/CSS + motion; no images. Paused while
+ * short ghci session, then loops. Pure HTML/CSS + motion; no images. Paused while
  * off-screen; static (fully typed) for prefers-reduced-motion.
  */
 export function TerminalDemo({ className }: { className?: string }) {
@@ -78,21 +78,26 @@ export function TerminalDemo({ className }: { className?: string }) {
         "relative w-full overflow-hidden rounded-xl border border-border-strong/70 bg-card shadow-lg",
         className
       )}
-      aria-label="Preview of a TEAL lab running Haskell's ghci in the browser"
+      aria-label="Preview of a TEAL lab running in the browser"
       role="img"
     >
       {/* Browser chrome */}
       <div className="flex items-center gap-3 border-b bg-muted/60 px-3 py-2.5">
-        <div className="flex gap-1.5" aria-hidden>
-          <span className="size-2.5 rounded-full border border-border-strong bg-card" />
-          <span className="size-2.5 rounded-full border border-border-strong bg-card" />
-          <span className="size-2.5 rounded-full border border-border-strong bg-card" />
-        </div>
         <div className="mx-auto flex min-w-0 max-w-[75%] items-center gap-1.5 rounded-md border bg-card px-2.5 py-1 font-mono text-[0.6875rem] text-muted-foreground">
           <LockIcon className="size-3 shrink-0" aria-hidden />
           <span className="truncate">lab-k3x9p2q7ad-el.a.run.app</span>
         </div>
-        <div className="w-[42px]" aria-hidden />
+        <div className="-my-2.5 -mr-3 flex self-stretch text-muted-foreground" aria-hidden>
+          <span className="grid w-9 place-items-center transition-colors hover:bg-foreground/[0.07]">
+            <MinusIcon className="size-3.5" />
+          </span>
+          <span className="grid w-9 place-items-center transition-colors hover:bg-foreground/[0.07]">
+            <MaximizeIcon className="size-3" />
+          </span>
+          <span className="grid w-9 place-items-center transition-colors hover:bg-danger hover:text-white">
+            <XIcon className="size-3.5" />
+          </span>
+        </div>
       </div>
 
       {/* Lab page top bar (PLAN.md §4.4) */}
@@ -161,9 +166,9 @@ export function TerminalDemo({ className }: { className?: string }) {
         {/* Details panel */}
         <aside className="hidden w-[34%] max-w-[210px] shrink-0 flex-col gap-4 border-l bg-card p-3.5 sm:flex">
           <div>
-            <p className="text-[0.8125rem] leading-snug font-semibold">PFL: Principles of Functional Languages</p>
+            <p className="text-[0.8125rem] leading-snug font-semibold">Your course lab</p>
             <p className="mt-1 text-[0.6875rem] leading-relaxed text-muted-foreground">
-              Haskell via GHCup.
+              Course tools, preinstalled.
             </p>
           </div>
           <div>

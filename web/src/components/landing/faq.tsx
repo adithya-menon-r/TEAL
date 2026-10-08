@@ -13,7 +13,7 @@ const FAQS = [
   },
   {
     q: "Which email can I use?",
-    a: "Only your Amrita student email, in the form name@xx.students.amrita.edu (for example @cb.students.amrita.edu). You'll verify it with a link we email you. Check Junk if it doesn't arrive.",
+    a: "Only your Amrita student email address. You'll verify it with a link we email you. Check Junk if it doesn't arrive.",
   },
   {
     q: "What if I close the tab?",

@@ -4,7 +4,7 @@
  */
 export const ALLOWED_EMAIL_REGEX = /^[^@\s]+@[a-z0-9-]+\.students\.amrita\.edu$/
 
-export const EMAIL_DOMAIN_HINT = "name@xx.students.amrita.edu"
+export const EMAIL_DOMAIN_HINT = "roll_number@xx.students.amrita.edu"
 
 export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase()

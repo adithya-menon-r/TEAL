@@ -140,9 +140,6 @@ export default function DashboardPage() {
           <h1 className="mt-1.5 text-2xl font-bold tracking-tight sm:text-[1.75rem]">
             Hi, <span className="text-primary-ink">{name}</span>
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Pick a lab to start a fresh 60-minute environment in your browser.
-          </p>
         </FadeIn>
 
         {/* Connection problems, current lab, failed launch */}

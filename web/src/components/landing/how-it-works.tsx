@@ -9,12 +9,12 @@ const STEPS = [
   {
     icon: MailCheckIcon,
     title: "Sign in with your Amrita email",
-    body: "Create an account with your @xx.students.amrita.edu address and verify it from your inbox.",
+    body: "Create an account with your Amrita student email address and verify it from your inbox.",
   },
   {
     icon: LayoutGridIcon,
     title: "Pick your course lab",
-    body: "Linux, PFL (Haskell) or NNDL (TensorFlow). Each comes with the course tools already installed.",
+    body: "Choose the lab for your course. Each one comes with the tools already installed.",
   },
   {
     icon: CodeXmlIcon,

@@ -44,7 +44,6 @@ export default function LoginPage() {
     <AuthLayout
       eyebrow="Welcome back"
       title="Log in to TEAL"
-      description="Pick up where you left off. Your active lab keeps running while you're away."
       footer={
         <>
           New here? <TextLink to="/signup">Create an account</TextLink>
