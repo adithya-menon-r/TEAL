@@ -13,6 +13,7 @@ import {
   RefreshCw,
   Home,
   ChevronRight,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface RightPanelProps {
@@ -442,6 +443,27 @@ export const RightPanel: React.FC<RightPanelProps> = ({ labInfo }) => {
             })}
           </div>
         )}
+      </div>
+
+      {/* 4. Bottom Warning Notice (lowkey & centered) */}
+      <div
+        style={{
+          marginTop: 'auto',
+          borderTop: '1px solid var(--border)',
+          background: 'var(--popover)',
+          padding: '10px 14px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '6px',
+          fontSize: '0.74rem',
+          color: 'var(--muted-foreground)',
+          userSelect: 'none',
+          flexShrink: 0,
+        }}
+      >
+        <AlertTriangle size={13} style={{ color: 'var(--warning)', flexShrink: 0 }} />
+        <span>Files deleted when lab ends</span>
       </div>
     </aside>
   );
