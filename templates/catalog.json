@@ -5,7 +5,7 @@
     "description": "A clean Ubuntu shell with common command-line and build tools.",
     "image": "linux:v2",
     "interface": "terminal",
-    "tools": ["Ubuntu 24.04", "bash", "gcc / make (build-essential)", "python3", "vim", "nano", "git", "tmux", "curl"],
+    "tools": ["bash", "gcc / make (build-essential)", "python3", "pip3", "vim", "nano", "git", "tmux", "curl"],
     "cpu": "1",
     "memory": "1Gi",
     "durationMinutes": 60
@@ -23,7 +23,7 @@
   },
   {
     "id": "nndl",
-    "name": "NNDL Lab",
+    "name": "NNDL - Neural Networks & Deep Learning",
     "description": "JupyterLab with TensorFlow (CPU) and Keras.",
     "image": "nndl:v2",
     "interface": "jupyter",

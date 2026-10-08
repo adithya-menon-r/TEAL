@@ -21,7 +21,7 @@ const FAQS = [
   },
   {
     q: "How long does a lab take to start?",
-    a: "Usually 15 to 40 seconds. The dashboard shows each step while your container starts.",
+    a: "Usually 20 to 60 seconds. The dashboard shows each step while your container starts.",
   },
 ]
 

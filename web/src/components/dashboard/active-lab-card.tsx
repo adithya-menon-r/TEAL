@@ -5,7 +5,6 @@ import { ArrowUpRightIcon, Loader2Icon, PowerIcon, TriangleAlertIcon } from "luc
 import { Countdown } from "@/components/countdown"
 import { LaunchSteps } from "@/components/dashboard/launch-steps"
 import { LabIcon } from "@/components/lab-icon"
-import { MonoLabel } from "@/components/mono-label"
 import { StatusPill } from "@/components/status-dot"
 import {
   AlertDialog,
@@ -94,8 +93,12 @@ export function ActiveLabCard({
   }
 
   return (
-    <Card variant="highlight" className="relative" aria-labelledby="active-lab-title" role="region">
-      <div aria-hidden className="absolute inset-x-0 top-0 h-0.5 bg-linear-to-r from-primary via-primary/70 to-accent/70" />
+    <Card
+      variant="default"
+      className="transition-[box-shadow,border-color] duration-200 ease-out hover:border-primary/45 hover:shadow-md"
+      aria-labelledby="active-lab-title"
+      role="region"
+    >
       <CardHeader>
         <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
           <span className="grid size-11 shrink-0 place-items-center rounded-lg border border-primary/20 bg-primary-soft text-primary-ink">
@@ -103,17 +106,16 @@ export function ActiveLabCard({
           </span>
           <div className="min-w-0 flex-1 basis-56">
             <div className="flex flex-wrap items-center gap-2">
-              <MonoLabel>Active lab</MonoLabel>
+              <h2
+                id="active-lab-title"
+                ref={headingRef}
+                tabIndex={-1}
+                className="w-fit max-w-full rounded-sm text-lg leading-snug font-bold tracking-tight outline-none focus-visible:ring-[3px] focus-visible:ring-ring/35"
+              >
+                {session.templateName}
+              </h2>
               <StatusPill status={session.status} />
             </div>
-            <h2
-              id="active-lab-title"
-              ref={headingRef}
-              tabIndex={-1}
-              className="mt-1.5 w-fit max-w-full rounded-sm text-lg leading-snug font-bold tracking-tight outline-none focus-visible:ring-[3px] focus-visible:ring-ring/35"
-            >
-              {session.templateName}
-            </h2>
             <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs text-muted-foreground">
               <span>Started {formatTime(session.createdAt)}</span>
               <span>Ends {formatTime(session.expiresAt)}</span>

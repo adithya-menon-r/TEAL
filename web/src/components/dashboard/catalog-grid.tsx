@@ -11,7 +11,6 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { formatResources, formatUsd } from "@/lib/format"
 import type { Template } from "@/lib/types"
-import { cn } from "@/lib/utils"
 
 const VISIBLE_TOOLS = 5
 
@@ -100,7 +99,7 @@ function LabCard({
   )
 
   return (
-    <Card variant="interactive" className={cn("h-full", active && "border-primary/45")}>
+    <Card variant="interactive" className="h-full">
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <span className="grid size-10 place-items-center rounded-lg border bg-primary-soft text-primary-ink transition-[background-color,color] duration-200 ease-out group-hover/card:group-hover/card:bg-primary group-hover/card:text-primary-foreground">

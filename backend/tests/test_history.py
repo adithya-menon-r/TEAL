@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 from app import history
 
 T0 = datetime(2026, 10, 1, 9, 0, tzinfo=timezone.utc)
-NAMES = {"linux": "Linux Lab", "nndl": "NNDL Lab"}
+NAMES = {"linux": "Linux Lab", "nndl": "NNDL - Neural Networks & Deep Learning"}
 
 
 def doc(i, uid="u1", **extra):
@@ -69,7 +69,7 @@ def test_history_shape_and_fields():
             {
                 "id": "s01",
                 "templateId": "nndl",
-                "templateName": "NNDL Lab",
+                "templateName": "NNDL - Neural Networks & Deep Learning",
                 "status": "ended",
                 "endReason": "user",
                 "createdAt": "2026-10-01T10:00:00Z",

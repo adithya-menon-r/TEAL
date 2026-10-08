@@ -27,36 +27,32 @@ export function LaunchSteps({ session, className }: { session: Session; classNam
   const ready = session.status === "running"
   const elapsed = Math.max(0, now - Date.parse(session.createdAt))
   const current = ready ? STEPS.length : elapsed < CREATING_MS ? 0 : 1
-  // Eases towards ~90% over a typical 15–40 s start, then jumps to 100% when ready.
+  // Eases towards ~90% over a typical 20–60 s start, then jumps to 100% when ready.
   const progress = ready ? 1 : Math.min(0.9, 0.08 + 0.82 * (1 - Math.exp(-elapsed / 15_000)))
 
   const stateOf = (i: number): StepState => (i < current ? "done" : i === current ? "active" : "pending")
 
   return (
     <div className={cn("flex flex-col gap-4", className)}>
-      <ol className="grid gap-3 sm:grid-cols-3 sm:gap-0" aria-label="Launch progress">
+      <ol className="relative grid gap-3 sm:grid-cols-3 sm:gap-0" aria-label="Launch progress">
+        <span aria-hidden className="absolute top-3 right-[8.3333%] left-[8.3333%] hidden h-px bg-border sm:block" />
+        <span
+          aria-hidden
+          className="absolute top-3 left-3 hidden h-px bg-primary transition-[width] duration-300 ease-out sm:block"
+          style={{ width: `${progress * 83.3333}%`, left: "8.3333%" }}
+        />
         {STEPS.map((step, i) => {
           const state = stateOf(i)
           return (
             <li
               key={step.label}
-              className="relative flex items-center gap-3 sm:flex-col sm:items-start sm:gap-2.5 sm:pr-4"
+              className={cn(
+                "relative z-10 flex items-center gap-3 sm:flex-col sm:items-center sm:gap-2.5 sm:text-center",
+                i === 0 && "sm:-translate-x-1/4",
+                i === STEPS.length - 1 && "sm:translate-x-1/4",
+              )}
               aria-current={state === "active" ? "step" : undefined}
             >
-              {/* connector to the next step (desktop) */}
-              {i < STEPS.length - 1 && (
-                <span
-                  aria-hidden
-                  className="absolute top-3 right-0 left-9 hidden h-px overflow-hidden bg-border sm:block"
-                >
-                  <span
-                    className={cn(
-                      "block h-full origin-left bg-primary transition-transform duration-300 ease-out",
-                      state === "done" ? "scale-x-100" : "scale-x-0"
-                    )}
-                  />
-                </span>
-              )}
               <StepIndicator state={state} index={i} />
               <div className="min-w-0">
                 <p
@@ -98,7 +94,7 @@ export function LaunchSteps({ session, className }: { session: Session; classNam
           )}
         </div>
         <div className="flex items-center justify-between gap-3 font-mono text-[0.6875rem] text-muted-foreground">
-          <span>{ready ? "Your lab is up" : "Usually 15–40 s"}</span>
+          <span>{ready ? "Your lab is up" : "Usually 20–60 s"}</span>
           <span className="tabular-nums">
             {ready ? "Ready" : `${formatCountdown(elapsed)} elapsed`}
           </span>

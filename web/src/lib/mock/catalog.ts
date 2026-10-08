@@ -34,10 +34,10 @@ const entries: CatalogEntry[] = [
     description: "A clean Ubuntu shell with common command-line and build tools.",
     interface: "terminal",
     tools: [
-      "Ubuntu 24.04",
       "bash",
       "gcc / make (build-essential)",
       "python3",
+      "pip3",
       "vim",
       "nano",
       "git",
@@ -71,7 +71,7 @@ const entries: CatalogEntry[] = [
   },
   {
     id: "nndl",
-    name: "NNDL Lab",
+    name: "NNDL - Neural Networks & Deep Learning",
     description: "JupyterLab with TensorFlow (CPU) and Keras.",
     interface: "jupyter",
     tools: [

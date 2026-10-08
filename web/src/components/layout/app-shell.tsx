@@ -32,10 +32,10 @@ export function AppShell() {
       <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur-md supports-[backdrop-filter]:bg-background/70">
         <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-3 px-4 sm:px-6">
           <Link
-            to="/dashboard"
+            to="/"
             className="flex shrink-0 items-center rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/35"
           >
-            <Wordmark tagline />
+            <Wordmark />
           </Link>
 
           <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-3">

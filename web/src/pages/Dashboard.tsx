@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState, type ReactNode, type Ref } from "react"
 import { AnimatePresence, motion } from "motion/react"
-import { InfoIcon, RotateCwIcon, WifiOffIcon, XIcon } from "lucide-react"
+import { RotateCwIcon, WifiOffIcon, XIcon } from "lucide-react"
 
 import { ActiveLabCard } from "@/components/dashboard/active-lab-card"
 import { CatalogGrid, CatalogSkeleton } from "@/components/dashboard/catalog-grid"
@@ -183,21 +183,6 @@ export default function DashboardPage() {
               headingRef={catalogHeadingRef}
               title="Labs"
               description="Each lab is a fresh container that runs for 60 minutes. One lab at a time."
-              aside={
-                <AnimatePresence initial={false}>
-                  {active && (
-                    <motion.p
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0, transition: transitions.base }}
-                      exit={{ opacity: 0, transition: transitions.fast }}
-                      className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground"
-                    >
-                      <InfoIcon className="size-3.5" aria-hidden />
-                      Launch is off while your lab is running
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-              }
             />
 
             <Presence show={!!lab.notice} id="launch-notice">
