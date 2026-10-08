@@ -1,0 +1,248 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/*
+ * TEAL design tokens (light theme only).
+ *
+ * Brand:   #EEEAE3 warm off-white (background) · #2F7F7A teal (primary) · #C48A6D clay (accent)
+ * Text:    ink #172B2A (12.4:1 on background), muted ink #556461 (5.2:1 on background, 4.8:1 on muted)
+ * Rules:   use `text-primary-ink` / `text-accent-ink` for coloured TEXT on light surfaces;
+ *          `bg-primary` / `bg-accent` are for fills (white on primary = 4.7:1, ink on accent = 5.1:1).
+ * Lab timer: `warning` (≤ 10 min left) and `danger` (≤ 2 min left), each with a `-soft` fill.
+ */
+:root {
+  --radius: 0.5rem;
+
+  --background: #eeeae3;
+  --foreground: #172b2a;
+
+  --card: #f8f6f2;
+  --card-foreground: #172b2a;
+  --popover: #fbfaf7;
+  --popover-foreground: #172b2a;
+
+  --primary: #2f7f7a;
+  --primary-foreground: #ffffff;
+  --primary-hover: #286e6a;
+  --primary-ink: #286e6a; /* teal text on light surfaces (4.96:1 on background) */
+  --primary-soft: #dcebe8; /* teal tint fill; ink text on it 11:1 */
+
+  --secondary: #e4ded4;
+  --secondary-foreground: #172b2a;
+
+  --muted: #e6e1d8;
+  --muted-foreground: #556461;
+
+  --accent: #c48a6d;
+  --accent-foreground: #172b2a; /* 5.1:1 on clay */
+  --accent-ink: #93563a; /* clay text on light surfaces (4.8:1 on background) */
+  --accent-soft: #f3e3d9;
+
+  --destructive: #b42318;
+  --destructive-foreground: #ffffff;
+
+  --warning: #a14e06; /* 4.85:1 on background */
+  --warning-foreground: #ffffff;
+  --warning-soft: #fbefd6;
+
+  --danger: #b42318; /* 5.5:1 on background */
+  --danger-foreground: #ffffff;
+  --danger-soft: #fbe4e0;
+
+  --border: #d9d3c8;
+  --border-strong: #c3bbad;
+  --input: #948a7c; /* field borders: 3.25:1 on the field fill (WCAG 1.4.11) */
+  --ring: #2f7f7a;
+
+  /* Terminal / code surfaces (hero demo, future lab previews) */
+  --terminal: #11201f;
+  --terminal-foreground: #d7e4e1;
+  --terminal-muted: #7f9692;
+}
+
+@theme inline {
+  --font-sans: "Manrope Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-heading: var(--font-sans);
+  --font-mono: "JetBrains Mono Variable", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-ink: var(--primary-ink);
+  --color-primary-soft: var(--primary-soft);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-danger-soft: var(--danger-soft);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-terminal: var(--terminal);
+  --color-terminal-foreground: var(--terminal-foreground);
+  --color-terminal-muted: var(--terminal-muted);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+
+  /* Restrained, ink-tinted shadows */
+  --shadow-xs: 0 1px 0 0 rgb(23 43 42 / 0.04);
+  --shadow-sm: 0 1px 2px 0 rgb(23 43 42 / 0.06), 0 1px 1px 0 rgb(23 43 42 / 0.03);
+  --shadow-md: 0 6px 16px -6px rgb(23 43 42 / 0.12), 0 2px 4px -2px rgb(23 43 42 / 0.06);
+  --shadow-lg: 0 18px 40px -16px rgb(23 43 42 / 0.2), 0 4px 10px -4px rgb(23 43 42 / 0.08);
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --animate-shimmer: shimmer 1.6s var(--ease-out-soft) infinite;
+  --animate-status-ping: status-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+  --animate-caret: caret 1.05s steps(1) infinite;
+  --animate-shake: shake 0.32s var(--ease-out-soft);
+  --animate-ready-ring: ready-ring 0.8s var(--ease-out-soft) 2;
+
+  @keyframes shimmer {
+    from {
+      background-position: 150% 0;
+    }
+    to {
+      background-position: -50% 0;
+    }
+  }
+  @keyframes status-ping {
+    0% {
+      transform: scale(1);
+      opacity: 0.55;
+    }
+    80%,
+    100% {
+      transform: scale(2.6);
+      opacity: 0;
+    }
+  }
+  @keyframes caret {
+    0%,
+    50% {
+      opacity: 1;
+    }
+    50.01%,
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes ready-ring {
+    from {
+      box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 45%, transparent);
+    }
+    to {
+      box-shadow: 0 0 0 9px color-mix(in oklab, var(--primary) 0%, transparent);
+    }
+  }
+  @keyframes shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    25% {
+      transform: translateX(-3px);
+    }
+    75% {
+      transform: translateX(3px);
+    }
+  }
+}
+
+/* Subtle background textures. Use sparingly (hero, auth backdrop). */
+@utility bg-dots {
+  background-image: radial-gradient(color-mix(in oklab, var(--foreground) 14%, transparent) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+@utility bg-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, var(--foreground) 7%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--foreground) 7%, transparent) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+/* Fades a texture out towards the edges. */
+@utility mask-radial-fade {
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+}
+
+/* Small uppercase monospace label (eyebrows, metadata keys). */
+@utility mono-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans antialiased;
+    font-feature-settings: "cv11", "ss01";
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+  }
+  body {
+    @apply min-h-dvh bg-background text-foreground;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--primary) 22%, transparent);
+  }
+  code,
+  kbd,
+  samp,
+  pre {
+    @apply font-mono;
+  }
+}
+
+/* Toasts: crisp border, small radius, soft entrance (sonner handles the slide). */
+@layer components {
+  .cn-toast {
+    @apply border border-border font-sans shadow-md;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
