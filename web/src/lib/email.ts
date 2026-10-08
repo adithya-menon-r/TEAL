@@ -25,4 +25,9 @@ export function emailError(email: string): string | null {
   return null
 }
 
-export const MIN_PASSWORD_LENGTH = 8
+export {
+  MIN_PASSWORD_LENGTH,
+  PASSWORD_HINT,
+  isStrongPassword,
+  passwordError,
+} from "./password"

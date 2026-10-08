@@ -10,7 +10,8 @@ import { Notice } from "@/components/notice"
 import { Button } from "@/components/ui/button"
 import { RESEND_COOLDOWN_KEY, RESEND_COOLDOWN_SECONDS, startCooldown } from "@/hooks/use-cooldown"
 import { authErrorMessage } from "@/lib/auth-errors"
-import { EMAIL_DOMAIN_HINT, emailError, MIN_PASSWORD_LENGTH } from "@/lib/email"
+import { EMAIL_DOMAIN_HINT, emailError } from "@/lib/email"
+import { PASSWORD_HINT, passwordError } from "@/lib/password"
 import { collapse } from "@/lib/motion"
 import { usePageTitle } from "@/hooks/use-page-title"
 
@@ -19,10 +20,7 @@ type Errors = { email?: string | null; password?: string | null; confirm?: strin
 function validate(email: string, password: string, confirm: string): Errors {
   return {
     email: emailError(email),
-    password:
-      password.length < MIN_PASSWORD_LENGTH
-        ? `Use at least ${MIN_PASSWORD_LENGTH} characters.`
-        : null,
+    password: passwordError(password),
     confirm: confirm !== password ? "Passwords don't match." : null,
   }
 }
@@ -109,7 +107,7 @@ export default function SignupPage() {
           onChange={(e) => setPassword(e.target.value)}
           onBlur={() => password && touch("password")}
           error={shown("password")}
-          hint={`At least ${MIN_PASSWORD_LENGTH} characters.`}
+          hint={PASSWORD_HINT}
         />
         <FormField
           label="Confirm password"

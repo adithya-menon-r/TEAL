@@ -1,5 +1,6 @@
 import type { AuthAdapter, AuthUser } from "@/auth/types"
 import { isAllowedEmail, normalizeEmail } from "@/lib/email"
+import { isStrongPassword } from "@/lib/password"
 import { DEMO_EMAIL, DEMO_PASSWORD } from "@/lib/mock/constants"
 import { delay, randomId, readJson, writeJson } from "@/lib/mock/storage"
 
@@ -81,7 +82,7 @@ export const mockAuthAdapter: AuthAdapter = {
     await delay(500, 800)
     const email = normalizeEmail(rawEmail)
     if (!email.includes("@")) fail("auth/invalid-email")
-    if (password.length < 6) fail("auth/weak-password")
+    if (!isStrongPassword(password)) fail("auth/weak-password")
     if (state.accounts[email]) fail("auth/email-already-in-use")
     commit({
       current: email,
