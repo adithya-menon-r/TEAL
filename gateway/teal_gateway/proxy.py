@@ -23,6 +23,13 @@ HOP_BY_HOP_HEADERS: Set[str] = {
     "upgrade",
 }
 
+WEBSOCKET_HANDSHAKE_HEADERS: Set[str] = {
+    "sec-websocket-extensions",
+    "sec-websocket-key",
+    "sec-websocket-protocol",
+    "sec-websocket-version",
+}
+
 
 async def forward_request(
     request: web.Request,
@@ -99,7 +106,13 @@ async def _forward_websocket(
     session: ClientSession,
 ) -> web.WebSocketResponse:
     """Proxy WebSocket connection bidirectionally."""
-    client_ws = web.WebSocketResponse()
+    client_protocols = tuple(
+        protocol.strip()
+        for value in request.headers.getall("Sec-WebSocket-Protocol", [])
+        for protocol in value.split(",")
+        if protocol.strip()
+    )
+    client_ws = web.WebSocketResponse(protocols=client_protocols)
     await client_ws.prepare(request)
 
     # Convert http(s) to ws(s) for target_url
@@ -111,7 +124,7 @@ async def _forward_websocket(
 
     headers = {}
     for k, v in request.headers.items():
-        if k.lower() not in HOP_BY_HOP_HEADERS:
+        if k.lower() not in HOP_BY_HOP_HEADERS and k.lower() not in WEBSOCKET_HANDSHAKE_HEADERS:
             headers[k] = v
     if "Host" in request.headers:
         headers["Host"] = request.headers["Host"]
@@ -121,6 +134,7 @@ async def _forward_websocket(
             ws_target_url,
             headers=headers,
             params=request.query,
+            protocols=client_protocols,
         )
     except Exception as e:
         logger.error("Failed to connect upstream WebSocket to %s: %s", ws_target_url, e)

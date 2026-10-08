@@ -237,7 +237,7 @@ class GatewayApp:
         self.app.router.add_get(r"/{path:.*}", self.handle_static_or_spa)
 
     async def _on_startup(self, app: web.Application) -> None:
-        self.session = ClientSession()
+        self.session = ClientSession(auto_decompress=False)
 
     async def _on_cleanup(self, app: web.Application) -> None:
         if self.session:

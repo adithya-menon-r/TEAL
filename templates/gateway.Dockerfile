@@ -1,13 +1,13 @@
 # templates/gateway.Dockerfile
 # Stage 1: Build the lab-ui frontend
-FROM node:20-alpine AS ui-builder
+FROM oven/bun:1-alpine AS ui-builder
 WORKDIR /build
 
-COPY lab-ui/package*.json ./
-RUN npm ci || npm install
+COPY lab-ui/package.json lab-ui/bun.lock ./
+RUN bun install --frozen-lockfile
 
 COPY lab-ui/ ./
-RUN npm run build
+RUN bun run build
 
 # Stage 2: Packaging scratch image containing teal-gateway code and built UI
 FROM scratch

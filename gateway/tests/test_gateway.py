@@ -5,6 +5,7 @@ Unit tests for TEAL lab gateway.
 """
 
 from datetime import datetime, timezone, timedelta
+import gzip
 import hashlib
 import json
 import os
@@ -12,7 +13,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from aiohttp.test_utils import AioHTTPTestCase, unittest_run_loop
+from aiohttp.test_utils import AioHTTPTestCase, TestServer
 from aiohttp import web
 
 import sys
@@ -44,8 +45,22 @@ class TestGateway(AioHTTPTestCase):
         (self.home_path / "work").mkdir()
         (self.home_path / "work" / "hello.txt").write_text("Hello TEAL!", encoding="utf-8")
 
+        async def compressed_response(request):
+            return web.Response(
+                body=gzip.compress(b"compressed terminal response"),
+                headers={
+                    "Content-Encoding": "gzip",
+                    "Content-Type": "text/plain",
+                },
+            )
+
+        upstream_app = web.Application()
+        upstream_app.router.add_get("/terminal/compressed", compressed_response)
+        self.upstream = TestServer(upstream_app)
+        await self.upstream.start_server()
+
         self.gateway = GatewayApp(
-            upstream_url="http://127.0.0.1:9999",
+            upstream_url=str(self.upstream.make_url("")).rstrip("/"),
             prefix="/terminal",
             home_dir=self.home_path,
         )
@@ -54,6 +69,10 @@ class TestGateway(AioHTTPTestCase):
     def tearDown(self):
         super().tearDown()
         self.temp_dir.cleanup()
+
+    async def asyncTearDown(self):
+        await self.upstream.close()
+        await super().asyncTearDown()
 
     async def test_healthz_unauthenticated(self):
         """/__teal/healthz should return 200 without auth."""
@@ -116,6 +135,20 @@ class TestGateway(AioHTTPTestCase):
         self.assertEqual(resp_file.status, 200)
         content = await resp_file.text()
         self.assertEqual(content, "Hello TEAL!")
+
+    async def test_proxy_preserves_compressed_response(self):
+        """Proxied compressed bytes must remain valid for the browser."""
+        cookies = {"teal_lab": self.test_token}
+        resp = await self.client.request(
+            "GET",
+            "/terminal/compressed",
+            cookies=cookies,
+            auto_decompress=False,
+        )
+
+        self.assertEqual(resp.status, 200)
+        self.assertEqual(resp.headers.get("Content-Encoding"), "gzip")
+        self.assertEqual(gzip.decompress(await resp.read()), b"compressed terminal response")
 
     async def test_files_path_traversal_blocked(self):
         """Path traversal outside home directory must return 403 or 404."""
