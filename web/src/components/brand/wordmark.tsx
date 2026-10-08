@@ -1,30 +1,28 @@
 import { cn } from "@/lib/utils"
 
-/** The TEAL mark: a teal tile with a prompt chevron and a clay cursor. */
+/**
+ * The TEAL mark: a teal tile holding a hexagonal container (an environment)
+ * with a clay core. Static, geometric, legible down to 16px.
+ *
+ * logo-options (swap the <path>/<circle> children below to try another):
+ *  A  T + dot:
+ *     <path d="M8 10.5h16M16 10.5V24" stroke-width="4" stroke-linecap="round" class="stroke-background"/>
+ *     <circle cx="24" cy="23" r="3" class="fill-accent"/>
+ *  C  Timer ring:
+ *     <path d="M16 7.5a8.5 8.5 0 1 0 8.5 8.5" stroke-width="3.2" stroke-linecap="round" class="stroke-background"/>
+ *     <circle cx="23.2" cy="8.8" r="3" class="fill-accent"/>
+ */
 export function LogoMark({ className }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 32 32"
-      fill="none"
-      aria-hidden
-      className={cn("size-7 shrink-0", className)}
-    >
+    <svg viewBox="0 0 32 32" fill="none" aria-hidden className={cn("block size-7 shrink-0", className)}>
       <rect width="32" height="32" rx="7" className="fill-primary" />
       <path
-        d="M9 11.5l5 4.5-5 4.5"
+        d="M16 6.5l8.5 4.9v9.7L16 26l-8.5-4.9v-9.7z"
         className="stroke-background"
         strokeWidth="2.6"
-        strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <rect
-        x="16"
-        y="19"
-        width="7.5"
-        height="2.6"
-        rx="1.3"
-        className="fill-accent origin-[19.75px_20.3px] transition-transform duration-300 ease-out group-hover/wordmark:scale-x-125"
-      />
+      <circle cx="16" cy="16.2" r="3.2" className="fill-accent" />
     </svg>
   )
 }
@@ -36,11 +34,11 @@ type WordmarkProps = {
   size?: "sm" | "md" | "lg"
 }
 
-/** TEAL wordmark. Wrap in a Link for navigation; hovering nudges the cursor. */
+/** TEAL wordmark. Wrap in a Link for navigation; */
 export function Wordmark({ className, tagline = false, size = "md" }: WordmarkProps) {
   return (
     <span
-      className={cn("group/wordmark inline-flex items-center gap-2.5", className)}
+      className={cn("inline-flex items-center gap-2.5", className)}
       aria-label="TEAL"
     >
       <LogoMark
@@ -48,7 +46,7 @@ export function Wordmark({ className, tagline = false, size = "md" }: WordmarkPr
       />
       <span
         className={cn(
-          "font-heading leading-none font-extrabold tracking-[0.14em] text-foreground",
+          "font-heading translate-y-px leading-none font-extrabold tracking-[0.14em] text-foreground",
           size === "sm" && "text-sm",
           size === "md" && "text-base",
           size === "lg" && "text-xl"
