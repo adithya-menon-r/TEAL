@@ -1,6 +1,12 @@
-# TEAL
+<p align="center">
+  <img src="images/logo.png" alt="TEAL Logo" width="96" />
+</p>
 
-TEAL is a cloud-hosted lab platform built for Amrita University students. It provisions isolated, time-limited lab environments on Google Cloud Run and serves them through a browser, requiring no local installation. Students log in with their Amrita student email, launch a lab, and get a fully interactive terminal or Jupyter environment that runs for 60 minutes before being automatically cleaned up.
+<h1 align="center">TEAL</h1>
+
+<p align="center">
+  A cloud-hosted lab platform built for Amrita University students. Provisions isolated, time-limited lab environments on Google Cloud Run and serves them through a browser, requiring no local installation. Students log in with their Amrita student email, launch a lab, and get a fully interactive terminal or Jupyter environment that runs for 60 minutes before being automatically cleaned up.
+</p>
 
 ---
 
