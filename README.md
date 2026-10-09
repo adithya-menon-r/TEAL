@@ -45,22 +45,7 @@ Key properties:
 
 ## Architecture
 
-```
-Browser
-  |
-  |-- dashboard (Cloudflare Pages) ---------> teal-api (Cloud Run, always-on)
-  |                                               |
-  |                                               |-- Firestore (session state)
-  |                                               |-- Cloud Run Admin API (provision labs)
-  |                                               |-- Firebase Auth (token verification)
-  |
-  |-- lab container (Cloud Run, ephemeral) --> teal-gateway (sidecar, port 8080)
-        |                                           |-- cookie auth
-        |                                           |-- reverse proxy to JupyterLab / ttyd
-        |                                           |-- /__teal/* management endpoints
-        |
-        |-- ttyd (terminal) or JupyterLab (port 7681 / 8888)
-```
+![TEAL Architecture](images/architecture.png)
 
 Cloud Scheduler fires `POST /internal/reap` on teal-api every minute to expire and clean up abandoned sessions.
 
