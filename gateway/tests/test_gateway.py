@@ -86,7 +86,7 @@ class TestGateway(AioHTTPTestCase):
         resp = await self.client.request("GET", "/")
         self.assertEqual(resp.status, 200)
         text = await resp.text()
-        self.assertIn("Connecting to Lab", text)
+        self.assertIn("Initializing Environment", text)
         self.assertIn("/__teal/auth", text)
 
     async def test_auth_failure_invalid_token(self):

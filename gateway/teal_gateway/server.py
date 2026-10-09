@@ -28,102 +28,146 @@ BOOTSTRAP_HTML = """<!DOCTYPE html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TEAL - Connecting to Lab</title>
+  <title>TEAL - Initializing Environment</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
   <style>
-    :root {
-      color-scheme: dark;
-    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background: #090d16;
-      color: #f1f5f9;
+      font-family: 'Manrope', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8f6f2;
+      color: #172b2a;
       display: flex;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
       padding: 1.5rem;
+      -webkit-font-smoothing: antialiased;
     }
-    .card {
-      background: #111827;
-      border: 1px solid #1f293d;
-      border-radius: 1rem;
-      padding: 2.5rem 2rem;
-      max-width: 440px;
-      width: 100%;
-      text-align: center;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+    .screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
     }
-    .badge {
-      display: inline-block;
-      padding: 0.25rem 0.75rem;
+    .logo-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: pulseGlow 1.8s infinite ease-in-out;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.45; }
+    }
+    .labels {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .mono-label {
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      color: #172b2a;
       font-weight: 600;
-      letter-spacing: 0.05em;
       text-transform: uppercase;
-      color: #38bdf8;
-      background: rgba(56, 189, 248, 0.1);
-      border: 1px solid rgba(56, 189, 248, 0.2);
-      border-radius: 9999px;
-      margin-bottom: 1rem;
     }
-    h1 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #f8fafc;
-      margin-bottom: 0.5rem;
+    .sub-label {
+      font-size: 0.8125rem;
+      color: #556461;
     }
-    p {
-      font-size: 0.95rem;
-      color: #94a3b8;
-      line-height: 1.5;
-      margin-bottom: 1.5rem;
-    }
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid rgba(56, 189, 248, 0.15);
-      border-top-color: #38bdf8;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 1.5rem auto;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    .error-box {
+    /* Error state */
+    .error-screen {
       display: none;
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.25);
-      color: #fca5a5;
-      padding: 1rem;
-      border-radius: 0.5rem;
-      font-size: 0.875rem;
-      line-height: 1.4;
-      text-align: left;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      max-width: 420px;
+      text-align: center;
     }
-    .btn {
-      display: inline-block;
-      margin-top: 1.25rem;
-      padding: 0.6rem 1.25rem;
-      background: #2563eb;
-      color: #fff;
+    .error-card {
+      background: #f8f6f2;
+      border: 1px solid #d9d3c8;
+      border-radius: 16px;
+      padding: 36px 32px;
+      width: 100%;
+      box-shadow: 0 18px 40px -16px rgb(23 43 42 / 0.2), 0 4px 10px -4px rgb(23 43 42 / 0.08);
+    }
+    .error-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: #fbe4e0;
+      border: 1px solid rgba(180, 35, 24, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 18px auto;
+      color: #b42318;
+      font-size: 1.5rem;
+    }
+    .error-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #172b2a;
+      margin-bottom: 8px;
+    }
+    .error-msg {
+      font-size: 0.85rem;
+      color: #556461;
+      line-height: 1.5;
+      margin-bottom: 28px;
+    }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      padding: 0.75rem 1.5rem;
+      background: #2f7f7a;
+      color: #ffffff;
       text-decoration: none;
-      font-size: 0.875rem;
-      font-weight: 500;
-      border-radius: 0.5rem;
-      transition: background 0.2s;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 8px;
+      transition: background 0.15s ease;
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
     }
-    .btn:hover { background: #1d4ed8; }
+    .btn-primary:hover { background: #286e6a; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="badge">TEAL Lab Gateway</div>
-    <h1>Connecting to Lab</h1>
-    <div class="spinner" id="spinner"></div>
-    <p id="msg">Verifying your secure session token...</p>
-    <div class="error-box" id="err"></div>
+  <!-- Normal loading state -->
+  <div class="screen" id="loading-screen">
+    <div class="logo-wrap">
+      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true" style="width:42px;height:42px;display:block;">
+        <rect width="32" height="32" rx="7" fill="#2F7F7A"/>
+        <path d="M16 7.5a8.5 8.5 0 1 0 8.5 8.5" stroke="#EEEAE3" stroke-width="3.2" stroke-linecap="round"/>
+        <circle cx="23.2" cy="8.8" r="3" fill="#C48A6D"/>
+      </svg>
+    </div>
+    <div class="labels">
+      <span class="mono-label">Initializing Environment</span>
+      <span class="sub-label">Setting up your secure container...</span>
+    </div>
+  </div>
+
+  <!-- Error state (hidden until auth fails) -->
+  <div class="error-screen" id="error-screen">
+    <div class="error-card">
+      <div class="error-icon">&#x26A0;</div>
+      <h2 class="error-title" id="err-title">Access Refused</h2>
+      <p class="error-msg" id="err-msg">Unable to establish lab session. Please return to the dashboard and reopen the lab.</p>
+      <a href="/dashboard" class="btn-primary" id="btn-return-dashboard">
+        Return to Dashboard &#x2192;
+      </a>
+    </div>
   </div>
 
   <script>
@@ -133,15 +177,16 @@ BOOTSTRAP_HTML = """<!DOCTYPE html>
       var params = new URLSearchParams(hash);
       var token = params.get('t');
 
-      var spinner = document.getElementById('spinner');
-      var msg = document.getElementById('msg');
-      var errBox = document.getElementById('err');
+      function showError(title, message) {
+        document.getElementById('loading-screen').style.display = 'none';
+        var errScreen = document.getElementById('error-screen');
+        errScreen.style.display = 'flex';
+        document.getElementById('err-title').textContent = title;
+        document.getElementById('err-msg').textContent = message;
+      }
 
       if (!token) {
-        spinner.style.display = 'none';
-        msg.textContent = 'Session token not found.';
-        errBox.style.display = 'block';
-        errBox.innerHTML = '<strong>401 Unauthorized</strong><br>Please open this lab directly from the TEAL dashboard.';
+        showError('Session Token Not Found', 'Please open this lab directly from the TEAL dashboard.');
         return;
       }
 
@@ -164,10 +209,7 @@ BOOTSTRAP_HTML = """<!DOCTYPE html>
         }
       })
       .catch(function(err) {
-        spinner.style.display = 'none';
-        msg.textContent = 'Unable to establish lab session.';
-        errBox.style.display = 'block';
-        errBox.innerHTML = '<strong>Access Refused</strong><br>' + err.message + '<br><br>Please return to the dashboard and restart or reopen the lab.';
+        showError('Access Refused', err.message + ' Please return to the dashboard and restart or reopen the lab.');
       });
     })();
   </script>

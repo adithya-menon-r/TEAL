@@ -46,7 +46,7 @@ export const LabEndedOverlay: React.FC<LabEndedOverlayProps> = ({
   };
 
   const config = getReasonConfig();
-  const returnUrl = dashboardUrl || '/';
+  const returnUrl = dashboardUrl || '/dashboard';
 
   return (
     <div

@@ -74,7 +74,7 @@ export const App: React.FC = () => {
             cpu: '1',
             memory: '2Gi',
           },
-          dashboardUrl: '/',
+          dashboardUrl: '/dashboard',
         });
         setLoading(false);
       });
