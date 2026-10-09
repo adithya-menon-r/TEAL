@@ -72,7 +72,7 @@ def _build_service(session_id: str, token: str) -> run_v2.Service:
         "TEAL_TOKEN_SHA256": token_hash,
         "TEAL_EXPIRES_AT": expires_at,
         "TEAL_API_URL": "https://placeholder.run.app",
-        "TEAL_DASHBOARD_URL": "https://teal.example.com",
+        "TEAL_DASHBOARD_URL": "https://teal.example.com/dashboard",
         "TEAL_LAB_INFO": '{"name":"Linux Lab","description":"Spike test","interface":"terminal","tools":[],"cpu":"1","memory":"1Gi"}',
     }
     return run_v2.Service(

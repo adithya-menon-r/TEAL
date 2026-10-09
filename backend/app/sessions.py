@@ -186,7 +186,7 @@ def launch(uid: str, email: str, template: dict) -> dict[str, Any]:
         "TEAL_TOKEN_SHA256": token_hash,
         "TEAL_EXPIRES_AT": _to_rfc3339(expires_at),
         "TEAL_API_URL": settings.PUBLIC_URL,
-        "TEAL_DASHBOARD_URL": settings.FRONTEND_ORIGIN,
+        "TEAL_DASHBOARD_URL": settings.FRONTEND_ORIGIN.rstrip("/") + "/dashboard",
     }
 
     # Fire-and-forget Cloud Run create (§9.1 step 5)
