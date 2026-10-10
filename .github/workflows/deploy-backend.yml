@@ -1,0 +1,76 @@
+name: Deploy Backend to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - "templates/catalog.json"
+      - "infra/api.env.yaml"
+      - ".github/workflows/deploy-backend.yml"
+
+env:
+  PROJECT_ID: bold-future-510804-q8
+  REGION: asia-south1
+  REPO: asia-south1-docker.pkg.dev/bold-future-510804-q8/teal
+  IMAGE: api
+  SERVICE: teal-api
+  API_SA: teal-api@bold-future-510804-q8.iam.gserviceaccount.com
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy API
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # Required for Workload Identity Federation
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Keyless auth via Workload Identity Federation — no long-lived SA key needed
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      # Tag each image with the short commit SHA for full traceability
+      - name: Set image tag
+        id: tag
+        run: echo "TAG=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      # Cloud Build does the heavy lifting (same command as the manual workflow)
+      - name: Build image via Cloud Build
+        run: |
+          gcloud builds submit \
+            --config infra/cloudbuild.yaml \
+            --substitutions=_IMAGE=${{ env.IMAGE }},_TAG=${{ steps.tag.outputs.TAG }},_DOCKERFILE=backend/Dockerfile \
+            --project=${{ env.PROJECT_ID }} \
+            .
+
+      # Deploy the freshly-built image to Cloud Run
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.SERVICE }} \
+            --image=${{ env.REPO }}/${{ env.IMAGE }}:${{ steps.tag.outputs.TAG }} \
+            --region=${{ env.REGION }} \
+            --service-account=${{ env.API_SA }} \
+            --env-vars-file=infra/api.env.yaml \
+            --no-allow-unauthenticated \
+            --ingress=all \
+            --project=${{ env.PROJECT_ID }}
+
+      - name: Print deployed URL
+        run: |
+          URL=$(gcloud run services describe ${{ env.SERVICE }} \
+            --region=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }} \
+            --format='value(status.url)')
+          echo "Deployed: $URL"
