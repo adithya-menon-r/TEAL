@@ -88,6 +88,21 @@ const entries: CatalogEntry[] = [
     memory: "4Gi",
     durationMinutes: 60,
   },
+  {
+    id: "linux-v2",
+    name: "Linux Lab (VS Code)",
+    description: "Full-fledged VS Code editor in the browser. Pre-configured for general software development.",
+    interface: "vscode",
+    tools: [
+      "VS Code (code-server)",
+      "Python 3.12",
+      "git",
+      "curl",
+    ],
+    cpu: "1",
+    memory: "1Gi",
+    durationMinutes: 60,
+  },
 ]
 
 export const LAB_CATALOG: Template[] = entries.map((t) => ({

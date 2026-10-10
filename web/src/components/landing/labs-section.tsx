@@ -23,8 +23,8 @@ function LabCard({ lab }: { lab: Template }) {
           <span className="grid size-11 place-items-center rounded-lg border bg-primary-soft text-primary-ink transition-[background-color,color] duration-200 ease-out group-hover/card:group-hover/card:bg-primary group-hover/card:text-primary-foreground">
             <LabIcon id={lab.id} className="size-5" />
           </span>
-          <Badge variant={lab.interface === "jupyter" ? "accent" : "outline"} mono>
-            {lab.interface === "jupyter" ? "JupyterLab" : "Terminal"}
+          <Badge variant={lab.interface === "jupyter" ? "accent" : lab.interface === "vscode" ? "default" : "outline"} mono>
+            {lab.interface === "jupyter" ? "JupyterLab" : lab.interface === "vscode" ? "VS Code" : "Terminal"}
           </Badge>
         </div>
         <h3 className="mt-3 text-lg leading-snug font-bold tracking-tight">{lab.name}</h3>

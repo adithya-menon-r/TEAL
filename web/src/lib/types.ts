@@ -1,6 +1,6 @@
 /** teal-api contract types (PLAN.md §8.1). Keep in sync with the backend. */
 
-export type TemplateInterface = "terminal" | "jupyter"
+export type TemplateInterface = "terminal" | "jupyter" | "vscode"
 
 export type Template = {
   id: string

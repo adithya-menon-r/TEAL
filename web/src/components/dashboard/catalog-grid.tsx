@@ -112,8 +112,8 @@ function LabCard({
                 Active
               </Badge>
             )}
-            <Badge variant={template.interface === "jupyter" ? "accent" : "outline"} mono>
-              {template.interface === "jupyter" ? "JupyterLab" : "Terminal"}
+            <Badge variant={template.interface === "jupyter" ? "accent" : template.interface === "vscode" ? "default" : "outline"} mono>
+              {template.interface === "jupyter" ? "JupyterLab" : template.interface === "vscode" ? "VS Code" : "Terminal"}
             </Badge>
           </div>
         </div>
