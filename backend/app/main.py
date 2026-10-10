@@ -73,7 +73,7 @@ app = FastAPI(title="TEAL API", docs_url=None, redoc_url=None)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[settings.FRONTEND_ORIGIN, "http://localhost:5173"],
-    allow_methods=["GET", "POST", "DELETE"],
+    allow_methods=["*"],
     allow_headers=["Authorization", "Content-Type"],
     allow_credentials=False,
 )
