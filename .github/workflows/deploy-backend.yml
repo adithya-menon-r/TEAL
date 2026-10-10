@@ -38,22 +38,33 @@ jobs:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+      # Configure Docker to push to Artifact Registry using the WIF credentials
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
       # Tag each image with the short commit SHA for full traceability
       - name: Set image tag
         id: tag
         run: echo "TAG=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
-      # Cloud Build does the heavy lifting (same command as the manual workflow)
-      - name: Build image via Cloud Build
+      # Build Docker image directly on the GitHub Actions runner (no Cloud Build bucket needed)
+      - name: Build Docker image
         run: |
-          gcloud builds submit \
-            --config infra/cloudbuild.yaml \
-            --substitutions=_IMAGE=${{ env.IMAGE }},_TAG=${{ steps.tag.outputs.TAG }},_DOCKERFILE=backend/Dockerfile \
-            --project=${{ env.PROJECT_ID }} \
+          docker build \
+            -f backend/Dockerfile \
+            -t ${{ env.REPO }}/${{ env.IMAGE }}:${{ steps.tag.outputs.TAG }} \
+            -t ${{ env.REPO }}/${{ env.IMAGE }}:latest \
             .
+
+      # Push both the SHA-tagged and :latest images to Artifact Registry
+      - name: Push image to Artifact Registry
+        run: |
+          docker push ${{ env.REPO }}/${{ env.IMAGE }}:${{ steps.tag.outputs.TAG }}
+          docker push ${{ env.REPO }}/${{ env.IMAGE }}:latest
+
+      # Set up gcloud CLI for the Cloud Run deploy step
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
 
       # Deploy the freshly-built image to Cloud Run
       - name: Deploy to Cloud Run
