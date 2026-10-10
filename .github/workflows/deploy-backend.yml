@@ -74,7 +74,7 @@ jobs:
             --region=${{ env.REGION }} \
             --service-account=${{ env.API_SA }} \
             --env-vars-file=infra/api.env.yaml \
-            --no-allow-unauthenticated \
+            --allow-unauthenticated \
             --ingress=all \
             --project=${{ env.PROJECT_ID }}
 

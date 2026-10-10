@@ -405,7 +405,7 @@ gcloud run deploy teal-api \
   --region=$REGION \
   --service-account=$API_SA \
   --env-vars-file=infra/api.env.yaml \
-  --no-allow-unauthenticated \
+  --allow-unauthenticated \
   --ingress=all
 ```
 
