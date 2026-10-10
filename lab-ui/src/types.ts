@@ -1,7 +1,7 @@
 export interface LabInfo {
   name?: string;
   description?: string;
-  interface?: 'terminal' | 'jupyter';
+  interface?: 'terminal' | 'jupyter' | 'vscode';
   tools?: string[];
   cpu?: string;
   memory?: string;

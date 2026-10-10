@@ -209,9 +209,10 @@ export const App: React.FC = () => {
     );
   }
 
-  // Upstream interface iframe URL: /jupyter/lab or /terminal/
+  // Upstream interface iframe URL: /jupyter/lab, /vscode/ or /terminal/
   const iframeSrc =
-    gatewayInfo.lab.interface === 'jupyter' ? '/jupyter/lab' : '/terminal/';
+    gatewayInfo.lab.interface === 'jupyter' ? '/jupyter/lab' : 
+    gatewayInfo.lab.interface === 'vscode' ? '/vscode/?folder=/home/student/work' : '/terminal/';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', background: 'var(--background)' }}>
