@@ -4,8 +4,8 @@
     "name": "Linux Lab",
     "description": "A clean Ubuntu environment with common command-line and build tools.",
     "interfaces": [
-      { "id": "terminal", "image": "linux-term:v2" },
-      { "id": "vscode", "image": "linux-code:v1" }
+      { "id": "terminal", "image": "linux-term:v3" },
+      { "id": "vscode", "image": "linux-code:v3" }
     ],
     "tools": ["bash", "gcc / make (build-essential)", "python3", "pip3", "vim", "nano", "git", "tmux", "curl"],
     "cpu": "1",
@@ -17,7 +17,7 @@
     "name": "PFL: Principles of Functional Languages",
     "description": "Haskell toolchain installed with GHCup: compile with ghc, experiment in ghci, build projects with cabal or stack.",
     "interfaces": [
-      { "id": "terminal", "image": "pfl:v2" }
+      { "id": "terminal", "image": "pfl:v3" }
     ],
     "tools": ["GHC 9.x (GHCup)", "GHCi", "cabal", "stack", "GHCup", "vim", "nano", "git", "tmux"],
     "cpu": "1",
@@ -29,7 +29,7 @@
     "name": "NNDL - Neural Networks & Deep Learning",
     "description": "JupyterLab with TensorFlow (CPU) and Keras.",
     "interfaces": [
-      { "id": "jupyter", "image": "nndl:v2" }
+      { "id": "jupyter", "image": "nndl:v3" }
     ],
     "tools": ["Python 3.12", "JupyterLab", "TensorFlow (CPU)", "Keras", "numpy", "pandas", "matplotlib", "scikit-learn"],
     "cpu": "2",
