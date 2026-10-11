@@ -293,6 +293,11 @@ class GatewayApp:
     @web.middleware
     async def _security_headers_middleware(self, request: web.Request, handler) -> web.StreamResponse:
         response = await handler(request)
+        # Proxied responses (flagged by proxy.py before prepare() is called)
+        # must not have TEAL's CSP added — the upstream tool manages its own
+        # headers, and we've already stripped X-Frame-Options in proxy.py.
+        if request.get("teal_proxied"):
+            return response
         response.headers["Content-Security-Policy"] = "frame-ancestors 'self'"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "no-referrer"
@@ -492,7 +497,7 @@ class GatewayApp:
         return resp
 
     async def handle_proxy(self, request: web.Request) -> web.StreamResponse:
-        """Reverse-proxy /terminal/* or /jupyter/* to the upstream process."""
+        """Reverse-proxy /terminal/* or /vscode/* or /jupyter/* to the upstream process."""
         if not self._is_authenticated(request):
             return web.Response(status=401, text="Unauthorized: session cookie required")
 

@@ -78,12 +78,18 @@ async def _forward_http(
                 reason=upstream_resp.reason,
             )
 
-            # Copy response headers except hop-by-hop
+            # Copy response headers except hop-by-hop.
+            # Also strip X-Frame-Options from upstream tools (e.g. code-server)
+            # so the lab UI can embed them in an iframe. TEAL's CSP
+            # (frame-ancestors 'self') on gateway responses is sufficient.
+            STRIP_FROM_UPSTREAM = HOP_BY_HOP_HEADERS | {"x-frame-options", "content-length"}
             for k, v in upstream_resp.headers.items():
-                if k.lower() not in HOP_BY_HOP_HEADERS and k.lower() != "content-length":
+                if k.lower() not in STRIP_FROM_UPSTREAM:
                     resp.headers[k] = v
 
             resp.content_length = upstream_resp.content_length
+            # Signal the middleware: this is a proxied response, skip TEAL's CSP.
+            request["teal_proxied"] = True
             await resp.prepare(request)
 
             async for chunk in upstream_resp.content.iter_chunked(65536):
