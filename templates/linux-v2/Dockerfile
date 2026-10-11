@@ -27,11 +27,19 @@ RUN wget -q https://github.com/gitpod-io/openvscode-server/releases/download/ope
 
 COPY --from=gateway /opt/teal-gateway /opt/teal-gateway
 RUN python3 -m venv /opt/teal-gateway/venv \
- && /opt/teal-gateway/venv/bin/pip install --no-cache-dir -r /opt/teal-gateway/requirements.txt
+ && /opt/teal-gateway/venv/bin/pip install --no-cache-dir -r /opt/teal-gateway/requirements.txt \
+ && chown -R student:student /opt/openvscode-server
 
-# Copy built-in TEAL download extension
-COPY templates/linux-v2/extensions/ /opt/openvscode-server/extensions/
-RUN chown -R student:student /opt/openvscode-server
+# Configure default Dark Modern theme for VS Code
+RUN mkdir -p /home/student/.openvscode-server/data/User \
+             /home/student/.openvscode-server/data/Machine \
+             /home/student/.vscode-remote/data/Machine \
+             /home/student/work/.vscode
+COPY templates/linux-v2/settings.json /home/student/.openvscode-server/data/User/settings.json
+COPY templates/linux-v2/settings.json /home/student/.openvscode-server/data/Machine/settings.json
+COPY templates/linux-v2/settings.json /home/student/.vscode-remote/data/Machine/settings.json
+COPY templates/linux-v2/settings.json /home/student/work/.vscode/settings.json
+RUN chown -R student:student /home/student
 
 ENV PYTHONPATH=/opt/teal-gateway
 USER student
