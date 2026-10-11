@@ -110,14 +110,16 @@ function LabCard({
           <span className="grid size-10 place-items-center rounded-lg border bg-primary-soft text-primary-ink transition-[background-color,color] duration-200 ease-out group-hover/card:group-hover/card:bg-primary group-hover/card:text-primary-foreground">
             <LabIcon id={template.id} className="size-[1.125rem]" />
           </span>
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center justify-end gap-1.5">
             {active && (
               <Badge variant="default" mono>
                 <StatusDot tone="primary" pulse />
                 Active
               </Badge>
             )}
-            {!multi && <InterfaceBadge interface={template.interfaces[0]} />}
+            {template.interfaces.map((i) => (
+              <InterfaceBadge key={i} interface={i} />
+            ))}
           </div>
         </div>
         <h3 className="mt-3 text-base leading-snug font-bold tracking-tight">{template.name}</h3>

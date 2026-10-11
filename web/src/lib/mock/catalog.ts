@@ -31,7 +31,7 @@ const entries: CatalogEntry[] = [
   {
     id: "linux",
     name: "Linux Lab",
-    description: "A clean Ubuntu shell with common command-line and build tools, in the terminal or a full VS Code editor.",
+    description: "A clean Ubuntu shell with common command-line and build tools.",
     interfaces: ["terminal", "vscode"],
     tools: [
       "bash",
@@ -43,7 +43,6 @@ const entries: CatalogEntry[] = [
       "git",
       "tmux",
       "curl",
-      "VS Code (code-server)",
     ],
     cpu: "1",
     memory: "1Gi",

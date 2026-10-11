@@ -7,7 +7,7 @@ export function InterfaceBadge({ interface: iface }: { interface: TemplateInterf
   const label = interfaceLabel(iface)
   if (!label) return null
   return (
-    <Badge variant={iface === "jupyter" ? "accent" : iface === "vscode" ? "default" : "outline"} mono>
+    <Badge variant={iface === "jupyter" ? "accent" : iface === "vscode" ? "info" : "outline"} mono>
       {label}
     </Badge>
   )

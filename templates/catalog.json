@@ -2,7 +2,7 @@
   {
     "id": "linux",
     "name": "Linux Lab",
-    "description": "A clean Ubuntu environment with common command-line and build tools. Use it from a terminal or from VS Code in the browser.",
+    "description": "A clean Ubuntu environment with common command-line and build tools.",
     "interfaces": [
       { "id": "terminal", "image": "linux-term:v2" },
       { "id": "vscode", "image": "linux-code:v1" }

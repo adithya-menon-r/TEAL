@@ -115,8 +115,8 @@ export function ActiveLabCard({
               >
                 {session.templateName}
               </h2>
-              <StatusPill status={session.status} />
               {session.interface && <InterfaceBadge interface={session.interface} />}
+              <StatusPill status={session.status} />
             </div>
             <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs text-muted-foreground">
               <span>Started {formatTime(session.createdAt)}</span>

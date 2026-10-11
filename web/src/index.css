@@ -39,6 +39,9 @@
   --accent-ink: #93563a; /* clay text on light surfaces (4.8:1 on background) */
   --accent-soft: #f3e3d9;
 
+  --info: #1f5f99; /* VS Code blue text/icon (5.7:1 on --info-soft) */
+  --info-soft: #e3eef9;
+
   --destructive: #b42318;
   --destructive-foreground: #ffffff;
 
@@ -85,6 +88,8 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--accent-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-warning: var(--warning);
