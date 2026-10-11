@@ -2,7 +2,7 @@ import { LAB_CATALOG, sessionCost } from "@/lib/mock/catalog"
 import { isAllowedEmail } from "@/lib/email"
 import { parseMockToken } from "@/lib/mock/auth"
 import { delay, hasMockFlag, randomId, readJson, writeJson } from "@/lib/mock/storage"
-import type { ApiErrorBody, EndReason, Session, Template } from "@/lib/types"
+import type { ApiErrorBody, EndReason, Session, Template, TemplateInterface } from "@/lib/types"
 
 /**
  * In-browser teal-api for VITE_MOCK=1, implementing every PLAN.md §8.1
@@ -41,7 +41,8 @@ function seedHistory(): Session[] {
     templateId: string,
     startedAgoMs: number,
     minutes: number,
-    endReason: EndReason
+    endReason: EndReason,
+    iface?: TemplateInterface
   ): Session => {
     const t = findTemplate(templateId)!
     const createdAt = now - startedAgoMs
@@ -50,6 +51,7 @@ function seedHistory(): Session[] {
       id: randomId(),
       templateId,
       templateName: t.name,
+      interface: iface ?? t.interfaces[0],
       status: "ended",
       endReason,
       createdAt: iso(createdAt),
@@ -59,10 +61,10 @@ function seedHistory(): Session[] {
     }
   }
   return [
-    past("pfl", 1 * day + 3 * 3600_000, 42, "user"),
-    past("linux", 2 * day + 5 * 3600_000, 60, "expired"),
-    past("nndl", 4 * day + 1 * 3600_000, 27, "user"),
-    past("pfl", 6 * day + 2 * 3600_000, 51, "user"),
+    past("pfl", 1 * day + 3 * 3600_000, 42, "user", "terminal"),
+    past("linux", 2 * day + 5 * 3600_000, 60, "expired", "vscode"),
+    past("nndl", 4 * day + 1 * 3600_000, 27, "user", "jupyter"),
+    past("pfl", 6 * day + 2 * 3600_000, 51, "user", "terminal"),
     { ...past("linux", 8 * day, 5, "failed"), status: "failed" },
   ]
 }
@@ -182,10 +184,14 @@ export async function mockFetch(url: string, init: RequestInit): Promise<Respons
     }
 
     if (method === "POST" && path === "/api/sessions") {
-      const body = JSON.parse(String(init.body ?? "{}")) as { templateId?: string }
+      const body = JSON.parse(String(init.body ?? "{}")) as { templateId?: string; interface?: string }
       const template = findTemplate(body.templateId ?? "")
       if (!template || hasMockFlag("unknown_template")) {
         return error(404, "unknown_template", `Unknown template "${body.templateId}".`)
+      }
+      const iface = body.interface ?? template.interfaces[0]
+      if (!template.interfaces.includes(iface as TemplateInterface)) {
+        return error(400, "unknown_interface", `Template "${template.id}" does not offer "${iface}".`)
       }
       if (hasMockFlag("launches_disabled")) {
         return error(403, "launches_disabled", "Launches are paused, try again later.")
@@ -207,6 +213,7 @@ export async function mockFetch(url: string, init: RequestInit): Promise<Respons
         id: randomId(),
         templateId: template.id,
         templateName: template.name,
+        interface: iface as TemplateInterface,
         status: "starting",
         createdAt: iso(now),
         expiresAt: iso(now + minutes * 60_000),

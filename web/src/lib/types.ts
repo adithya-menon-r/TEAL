@@ -6,7 +6,8 @@ export type Template = {
   id: string
   name: string
   description: string
-  interface: TemplateInterface
+  /** Ordered; the first one is the default. */
+  interfaces: TemplateInterface[]
   tools: string[]
   cpu: string
   memory: string
@@ -22,6 +23,8 @@ export type Session = {
   id: string
   templateId: string
   templateName: string
+  /** Missing on old history items. */
+  interface?: TemplateInterface
   status: SessionStatus
   endReason?: EndReason
   /** RFC 3339 */
@@ -50,6 +53,7 @@ export type ApiErrorCode =
   | "launches_disabled"
   | "capacity_full"
   | "unknown_template"
+  | "unknown_interface"
   | "provision_failed"
   | "no_active_session"
   | "network_error"

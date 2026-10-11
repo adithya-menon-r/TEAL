@@ -1,4 +1,4 @@
-import type { EndReason, Template } from "@/lib/types"
+import type { EndReason, Template, TemplateInterface } from "@/lib/types"
 
 /** 3725000 → "1:02:05", 59000 → "00:59", 0 → "00:00" */
 export function formatCountdown(ms: number): string {
@@ -61,4 +61,15 @@ export const END_REASON_LABEL: Record<EndReason, string> = {
   expired: "Time ran out",
   deleted: "Stopped by admin",
   failed: "Failed to start",
+}
+
+const INTERFACE_LABELS: Record<TemplateInterface, string> = {
+  terminal: "Terminal",
+  jupyter: "JupyterLab",
+  vscode: "VS Code",
+}
+
+/** "vscode" → "VS Code"; unknown/missing values give "". */
+export function interfaceLabel(iface: string | undefined): string {
+  return (iface && INTERFACE_LABELS[iface as TemplateInterface]) || ""
 }

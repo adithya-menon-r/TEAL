@@ -16,7 +16,7 @@ import { isActiveSession, useLabSession } from "@/hooks/use-lab-session"
 import { apiErrorMessage, getHistory, getTemplates, isApiError } from "@/lib/api"
 import { formatUsd } from "@/lib/format"
 import { transitions } from "@/lib/motion"
-import type { Template } from "@/lib/types"
+import type { Template, TemplateInterface } from "@/lib/types"
 
 const BLOCKED_REASON = "You already have a lab running. End it to launch another."
 
@@ -94,8 +94,8 @@ export default function DashboardPage() {
   const active = isActiveSession(lab.session) ? lab.session : null
   const activeTemplate = active ? templates.data?.find((t) => t.id === active.templateId) : undefined
 
-  async function handleLaunch(template: Pick<Template, "id" | "name">) {
-    const outcome = await lab.launch(template)
+  async function handleLaunch(template: Pick<Template, "id" | "name">, iface?: TemplateInterface) {
+    const outcome = await lab.launch(template, iface)
     if (outcome !== "failed") setFocusActive(true)
   }
 
@@ -209,7 +209,7 @@ export default function DashboardPage() {
                 launchBlocked={!!active}
                 blockedReason={active ? BLOCKED_REASON : undefined}
                 launchingId={lab.launchingId}
-                onLaunch={(t) => void handleLaunch(t)}
+                onLaunch={(t, iface) => void handleLaunch(t, iface)}
               />
             ) : sectionOffline(templates.error) ? (
               <OfflinePlaceholder>The lab catalog will load once TEAL is reachable.</OfflinePlaceholder>
