@@ -12,21 +12,30 @@ RUN bash /tmp/base/install-base.sh \
     man-db \
     curl \
     git \
- && curl -fsSL https://code-server.dev/install.sh | sh \
+    wget \
+    tar \
+    ca-certificates \
  && rm -rf /var/lib/apt/lists/* \
  && rm -rf /tmp/base
+
+# Install openvscode-server (supports native subpath hosting via --server-base-path)
+ENV OPENVSCODE_VERSION=v1.109.5
+RUN wget -q https://github.com/gitpod-io/openvscode-server/releases/download/openvscode-server-${OPENVSCODE_VERSION}/openvscode-server-${OPENVSCODE_VERSION}-linux-x64.tar.gz -O /tmp/openvscode.tar.gz \
+ && tar -xzf /tmp/openvscode.tar.gz -C /opt/ \
+ && mv /opt/openvscode-server-${OPENVSCODE_VERSION}-linux-x64 /opt/openvscode-server \
+ && rm /tmp/openvscode.tar.gz
 
 COPY --from=gateway /opt/teal-gateway /opt/teal-gateway
 RUN python3 -m venv /opt/teal-gateway/venv \
  && /opt/teal-gateway/venv/bin/pip install --no-cache-dir -r /opt/teal-gateway/requirements.txt
 
+# Copy built-in TEAL download extension
+COPY templates/linux-v2/extensions/ /opt/openvscode-server/extensions/
+RUN chown -R student:student /opt/openvscode-server
+
 ENV PYTHONPATH=/opt/teal-gateway
 USER student
 WORKDIR /home/student/work
 
-# code-server arguments:
-# --auth none: we don't need a password because teal_gateway handles auth
-# --bind-addr 127.0.0.1:7681: bind to the port teal_gateway proxies
-# --disable-telemetry: standard best practice
 ENTRYPOINT ["/opt/teal-gateway/venv/bin/python", "-m", "teal_gateway", "--upstream=http://127.0.0.1:7681", "--prefix=/vscode", "--", \
-            "code-server", "--auth", "none", "--bind-addr", "127.0.0.1:7681", "--disable-telemetry", "."]
+            "/opt/openvscode-server/bin/openvscode-server", "--server-base-path", "/vscode", "--without-connection-token", "--host", "127.0.0.1", "--port", "7681", "--telemetry-level", "off", "/home/student/work"]
