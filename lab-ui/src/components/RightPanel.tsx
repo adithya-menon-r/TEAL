@@ -14,10 +14,15 @@ import {
   Home,
   ChevronRight,
   AlertTriangle,
+  Power,
 } from 'lucide-react';
 
 interface RightPanelProps {
   labInfo: LabInfo;
+  open: boolean;
+  isNarrow: boolean;
+  onClose: () => void;
+  onTriggerEnd: () => void;
 }
 
 const getFileIcon = (name: string) => {
@@ -67,7 +72,7 @@ const getFileIcon = (name: string) => {
   return <File size={15} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />;
 };
 
-export const RightPanel: React.FC<RightPanelProps> = ({ labInfo }) => {
+export const RightPanel: React.FC<RightPanelProps> = ({ labInfo, open, isNarrow, onClose, onTriggerEnd }) => {
   const [currentPath, setCurrentPath] = useState<string>('');
   const [items, setItems] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -119,19 +124,30 @@ export const RightPanel: React.FC<RightPanelProps> = ({ labInfo }) => {
 
   const pathParts = currentPath ? currentPath.split('/') : [];
 
+  const asideClass = [
+    'lab-sidebar',
+    isNarrow ? 'lab-sidebar--drawer' : 'lab-sidebar--inline',
+    isNarrow && open ? 'is-open' : '',
+  ].join(' ');
+
   return (
+    <>
+    {isNarrow && (
+      <div
+        className={`lab-backdrop${open ? ' is-open' : ''}`}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+    )}
     <aside
+      id="lab-sidebar"
+      className={asideClass}
+      aria-label="Lab sidebar"
+      {...(isNarrow && !open ? { 'aria-hidden': true, inert: '' as any } : {})}
       style={{
-        width: 'var(--sidebar-width)',
-        height: 'calc(100vh - var(--topbar-height))',
         background: 'var(--card)',
-        borderLeft: '1px solid var(--border)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        flexShrink: 0,
-        zIndex: 40,
         boxShadow: '-1px 0 0 0 rgb(23 43 42 / 0.02)',
+        ...(isNarrow ? {} : { height: 'calc(100vh - var(--topbar-height))', zIndex: 40 }),
       }}
     >
       {/* 1. Lab Name Header (with line below it, no subtext) */}
@@ -141,6 +157,10 @@ export const RightPanel: React.FC<RightPanelProps> = ({ labInfo }) => {
           borderBottom: '1px solid var(--border)',
           background: 'var(--card)',
           flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
         }}
       >
         <h2
@@ -152,10 +172,24 @@ export const RightPanel: React.FC<RightPanelProps> = ({ labInfo }) => {
             margin: 0,
             lineHeight: 1.35,
             fontFamily: 'var(--font-heading)',
+            minWidth: 0,
+            overflowWrap: 'anywhere',
           }}
         >
           {labInfo.name || 'Your course lab'}
         </h2>
+        {isNarrow && (
+          <button
+            className="btn btn-destructive-outline"
+            onClick={onTriggerEnd}
+            title="End this lab session"
+            id="btn-end-lab-sidebar"
+            style={{ height: '32px', padding: '0 12px', flexShrink: 0 }}
+          >
+            <Power size={14} />
+            <span>End Lab</span>
+          </button>
+        )}
       </div>
 
       {/* 2. File Explorer Toolbar & Breadcrumb */}
@@ -445,6 +479,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ labInfo }) => {
         )}
       </div>
 
+
       {/* 4. Bottom Warning Notice (lowkey & centered) */}
       <div
         style={{
@@ -466,5 +501,6 @@ export const RightPanel: React.FC<RightPanelProps> = ({ labInfo }) => {
         <span>Files deleted when lab ends</span>
       </div>
     </aside>
+    </>
   );
 };

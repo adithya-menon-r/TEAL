@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { useSidebar } from './hooks/useSidebar';
 import { GatewayInfo, ToastMessage } from './types';
 import { TopBar } from './components/TopBar';
 import { RightPanel } from './components/RightPanel';
@@ -22,6 +23,9 @@ export const App: React.FC = () => {
     ended: false,
     reason: 'user',
   });
+
+  const sidebar = useSidebar();
+  const hasSidebar = gatewayInfo?.lab?.interface !== 'vscode';
 
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const endedRef = useRef(false);
@@ -220,6 +224,10 @@ export const App: React.FC = () => {
         labInfo={gatewayInfo.lab}
         expiresAt={gatewayInfo.expiresAt}
         onTriggerEnd={() => setIsEndModalOpen(true)}
+        sidebarOpen={sidebar.open}
+        hasSidebar={hasSidebar}
+        isNarrow={sidebar.isNarrow}
+        onToggleSidebar={sidebar.toggle}
         onExpire={handleExpire}
         onWarnTenMin={handleWarnTenMin}
         onWarnTwoMin={handleWarnTwoMin}
@@ -230,6 +238,7 @@ export const App: React.FC = () => {
         <main
           style={{
             flex: 1,
+            minWidth: 0,
             height: '100%',
             background: '#000000',
             position: 'relative',
@@ -278,9 +287,15 @@ export const App: React.FC = () => {
           />
         </main>
 
-        {/* Right Details Panel (File Explorer) - hidden for vscode lab where it is redundant */}
-        {gatewayInfo.lab.interface !== 'vscode' && (
-          <RightPanel labInfo={gatewayInfo.lab} />
+        {/* Sidebar: inline on desktop, overlay drawer on phones; none for VS Code */}
+        {hasSidebar && (
+          <RightPanel
+            labInfo={gatewayInfo.lab}
+            open={sidebar.open}
+            isNarrow={sidebar.isNarrow}
+            onClose={sidebar.close}
+            onTriggerEnd={() => setIsEndModalOpen(true)}
+          />
         )}
       </div>
 
