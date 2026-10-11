@@ -9,16 +9,16 @@
 #
 #   # Build a lab image (requires gateway image to exist)
 #   gcloud builds submit --config infra/cloudbuild.yaml \
-#     --substitutions=_IMAGE=linux,_TAG=v1,_DOCKERFILE=templates/linux/Dockerfile,_GATEWAY_TAG=v1 .
+#     --substitutions=_IMAGE=linux-term,_TAG=v2,_DOCKERFILE=templates/linux-term/Dockerfile,_GATEWAY_TAG=v1 .
 #
 #   # Build the backend API image
 #   gcloud builds submit --config infra/cloudbuild.yaml \
 #     --substitutions=_IMAGE=api,_TAG=v1,_DOCKERFILE=backend/Dockerfile .
 
 substitutions:
-  _IMAGE: linux
-  _TAG: v1
-  _DOCKERFILE: templates/linux/Dockerfile
+  _IMAGE: linux-term
+  _TAG: v2
+  _DOCKERFILE: templates/linux-term/Dockerfile
   _GATEWAY_TAG: v1
 
 steps:

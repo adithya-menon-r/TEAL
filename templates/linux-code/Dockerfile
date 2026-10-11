@@ -1,4 +1,4 @@
-# templates/linux-v2/Dockerfile
+# templates/linux-code/Dockerfile
 ARG GATEWAY_IMAGE
 FROM ${GATEWAY_IMAGE} AS gateway
 
@@ -35,10 +35,10 @@ RUN mkdir -p /home/student/.openvscode-server/data/User \
              /home/student/.openvscode-server/data/Machine \
              /home/student/.vscode-remote/data/Machine \
              /home/student/work/.vscode
-COPY templates/linux-v2/settings.json /home/student/.openvscode-server/data/User/settings.json
-COPY templates/linux-v2/settings.json /home/student/.openvscode-server/data/Machine/settings.json
-COPY templates/linux-v2/settings.json /home/student/.vscode-remote/data/Machine/settings.json
-COPY templates/linux-v2/settings.json /home/student/work/.vscode/settings.json
+COPY templates/linux-code/settings.json /home/student/.openvscode-server/data/User/settings.json
+COPY templates/linux-code/settings.json /home/student/.openvscode-server/data/Machine/settings.json
+COPY templates/linux-code/settings.json /home/student/.vscode-remote/data/Machine/settings.json
+COPY templates/linux-code/settings.json /home/student/work/.vscode/settings.json
 RUN chown -R student:student /home/student
 
 ENV PYTHONPATH=/opt/teal-gateway

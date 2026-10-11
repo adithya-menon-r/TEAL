@@ -42,11 +42,11 @@ REGION = os.environ.get("REGION", "asia-south1")
 IMAGE_REPO = os.environ.get(
     "IMAGE_REPO", f"asia-south1-docker.pkg.dev/{PROJECT}/teal"
 )
-# Use linux:v1 once built; fall back to the public hello image before that
+# Use linux-term:v2 once built; fall back to the public hello image before that
 LAB_IMAGE = os.environ.get(
     "LAB_IMAGE",
     # Swap in the real image once `gcloud builds submit` has been run:
-    # f"{IMAGE_REPO}/linux:v1"
+    # f"{IMAGE_REPO}/linux-term:v2"
     "us-docker.pkg.dev/cloudrun/container/hello",  # public placeholder
 )
 LAB_SA = os.environ.get(

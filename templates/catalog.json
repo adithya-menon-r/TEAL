@@ -2,9 +2,11 @@
   {
     "id": "linux",
     "name": "Linux Lab",
-    "description": "A clean Ubuntu shell with common command-line and build tools.",
-    "image": "linux:v2",
-    "interface": "terminal",
+    "description": "A clean Ubuntu environment with common command-line and build tools. Use it from a terminal or from VS Code in the browser.",
+    "interfaces": [
+      { "id": "terminal", "image": "linux-term:v2" },
+      { "id": "vscode", "image": "linux-code:v1" }
+    ],
     "tools": ["bash", "gcc / make (build-essential)", "python3", "pip3", "vim", "nano", "git", "tmux", "curl"],
     "cpu": "1",
     "memory": "1Gi",
@@ -14,8 +16,9 @@
     "id": "pfl",
     "name": "PFL: Principles of Functional Languages",
     "description": "Haskell toolchain installed with GHCup: compile with ghc, experiment in ghci, build projects with cabal or stack.",
-    "image": "pfl:v2",
-    "interface": "terminal",
+    "interfaces": [
+      { "id": "terminal", "image": "pfl:v2" }
+    ],
     "tools": ["GHC 9.x (GHCup)", "GHCi", "cabal", "stack", "GHCup", "vim", "nano", "git", "tmux"],
     "cpu": "1",
     "memory": "2Gi",
@@ -25,22 +28,12 @@
     "id": "nndl",
     "name": "NNDL - Neural Networks & Deep Learning",
     "description": "JupyterLab with TensorFlow (CPU) and Keras.",
-    "image": "nndl:v2",
-    "interface": "jupyter",
+    "interfaces": [
+      { "id": "jupyter", "image": "nndl:v2" }
+    ],
     "tools": ["Python 3.12", "JupyterLab", "TensorFlow (CPU)", "Keras", "numpy", "pandas", "matplotlib", "scikit-learn"],
     "cpu": "2",
     "memory": "4Gi",
-    "durationMinutes": 60
-  },
-  {
-    "id": "linux-v2",
-    "name": "Linux Lab (VS Code)",
-    "description": "Full-fledged VS Code editor in the browser. Pre-configured for general software development.",
-    "image": "linux-v2:v1",
-    "interface": "vscode",
-    "tools": ["VS Code (code-server)", "Python 3.12", "git", "curl"],
-    "cpu": "1",
-    "memory": "1Gi",
     "durationMinutes": 60
   }
 ]

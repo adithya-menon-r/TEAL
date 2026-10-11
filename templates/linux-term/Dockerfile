@@ -1,4 +1,4 @@
-# templates/linux/Dockerfile
+# templates/linux-term/Dockerfile
 ARG GATEWAY_IMAGE
 FROM ${GATEWAY_IMAGE} AS gateway
 
