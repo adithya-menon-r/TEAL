@@ -48,7 +48,7 @@ def load_catalog() -> None:
             raise ValueError(
                 f"Template '{entry.get('id', '?')}' is missing fields: {missing}"
             )
-        if entry["interface"] not in ("terminal", "jupyter"):
+        if entry["interface"] not in ("terminal", "jupyter", "vscode"):
             raise ValueError(
                 f"Template '{entry['id']}' has unknown interface: {entry['interface']}"
             )

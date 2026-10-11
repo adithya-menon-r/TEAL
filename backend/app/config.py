@@ -5,21 +5,65 @@ Reads all environment variables and exposes them as a typed Settings object.
 Import `settings` everywhere instead of calling os.environ directly.
 """
 
+from pathlib import Path
 import os
 import re
 
 
+def _load_env_file() -> None:
+    env_paths = [
+        Path.cwd() / ".env",
+        Path(__file__).resolve().parent.parent / ".env",
+        Path(__file__).resolve().parent.parent.parent / "infra" / "api.env.yaml",
+    ]
+    for env_path in env_paths:
+        if env_path.is_file():
+            with open(env_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+                    if "=" in line:
+                        k, v = line.split("=", 1)
+                        k, v = k.strip(), v.strip().strip('"').strip("'")
+                        os.environ.setdefault(k, v)
+                    elif ":" in line:
+                        k, v = line.split(":", 1)
+                        k, v = k.strip(), v.strip().strip('"').strip("'")
+                        os.environ.setdefault(k, v)
+
+
+_load_env_file()
+
+
+def _resolve_catalog_path() -> str:
+    specified = os.environ.get("CATALOG_PATH", "")
+    if specified and Path(specified).exists():
+        return str(Path(specified).resolve())
+
+    # Check container path
+    if Path("/app/catalog.json").exists():
+        return "/app/catalog.json"
+
+    # Check repo root
+    repo_catalog = Path(__file__).resolve().parent.parent.parent / "templates" / "catalog.json"
+    if repo_catalog.exists():
+        return str(repo_catalog.resolve())
+
+    return specified or "/app/catalog.json"
+
+
 class Settings:
     # GCP
-    GCP_PROJECT: str = os.environ["GCP_PROJECT"]
+    GCP_PROJECT: str = os.environ.get("GCP_PROJECT", "")
     REGION: str = os.environ.get("REGION", "asia-south1")
-    LAB_SA: str = os.environ["LAB_SA"]
-    SCHEDULER_SA: str = os.environ["SCHEDULER_SA"]
-    IMAGE_REPO: str = os.environ["IMAGE_REPO"]
-    PUBLIC_URL: str = os.environ["PUBLIC_URL"]
+    LAB_SA: str = os.environ.get("LAB_SA", "")
+    SCHEDULER_SA: str = os.environ.get("SCHEDULER_SA", "")
+    IMAGE_REPO: str = os.environ.get("IMAGE_REPO", "")
+    PUBLIC_URL: str = os.environ.get("PUBLIC_URL", "")
 
     # Catalog
-    CATALOG_PATH: str = os.environ.get("CATALOG_PATH", "/app/catalog.json")
+    CATALOG_PATH: str = _resolve_catalog_path()
 
     # Auth / access
     ALLOWED_EMAIL_REGEX: re.Pattern = re.compile(
@@ -31,7 +75,7 @@ class Settings:
 
     # CORS
     FRONTEND_ORIGIN: str = os.environ.get(
-        "FRONTEND_ORIGIN", "https://teal.example.com"
+        "FRONTEND_ORIGIN", "http://localhost:5173"
     )
 
     # Lab limits

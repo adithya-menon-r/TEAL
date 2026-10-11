@@ -32,7 +32,8 @@ logger = logging.getLogger(__name__)
 # On Cloud Run the SDK picks up the service account automatically (ADC).
 # Locally, set GOOGLE_APPLICATION_CREDENTIALS to a key file (never commit it).
 # ---------------------------------------------------------------------------
-firebase_app = firebase_admin.initialize_app()
+_fb_options = {"projectId": settings.GCP_PROJECT} if settings.GCP_PROJECT else None
+firebase_app = firebase_admin.initialize_app(options=_fb_options)
 
 # FastAPI's built-in Bearer token extractor
 _bearer = HTTPBearer(auto_error=False)
