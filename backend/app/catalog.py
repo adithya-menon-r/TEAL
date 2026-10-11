@@ -21,10 +21,33 @@ from .cost import hourly_cost
 logger = logging.getLogger(__name__)
 
 # Required fields that every template entry must have
-_REQUIRED_FIELDS = {"id", "name", "description", "image", "interface", "tools", "cpu", "memory", "durationMinutes"}
+_REQUIRED_FIELDS = {"id", "name", "description", "interfaces", "tools", "cpu", "memory", "durationMinutes"}
+
+VALID_INTERFACES = ("terminal", "jupyter", "vscode")
 
 # Singleton — populated by load_catalog() on startup
 _catalog: list[dict[str, Any]] = []
+
+
+def _validate_interfaces(entry: dict[str, Any]) -> None:
+    """Check that entry['interfaces'] is a non-empty list of unique {id, image}."""
+    tid = entry["id"]
+    interfaces = entry["interfaces"]
+    if not isinstance(interfaces, list) or not interfaces:
+        raise ValueError(f"Template '{tid}' must have a non-empty 'interfaces' list")
+    seen: set[str] = set()
+    for iface in interfaces:
+        if not isinstance(iface, dict):
+            raise ValueError(f"Template '{tid}' has a malformed interface entry: {iface!r}")
+        iid = iface.get("id")
+        if iid not in VALID_INTERFACES:
+            raise ValueError(f"Template '{tid}' has unknown interface: {iid}")
+        image = iface.get("image")
+        if not isinstance(image, str) or not image.strip():
+            raise ValueError(f"Template '{tid}' interface '{iid}' has no image")
+        if iid in seen:
+            raise ValueError(f"Template '{tid}' has duplicate interface: {iid}")
+        seen.add(iid)
 
 
 def load_catalog() -> None:
@@ -48,10 +71,7 @@ def load_catalog() -> None:
             raise ValueError(
                 f"Template '{entry.get('id', '?')}' is missing fields: {missing}"
             )
-        if entry["interface"] not in ("terminal", "jupyter", "vscode"):
-            raise ValueError(
-                f"Template '{entry['id']}' has unknown interface: {entry['interface']}"
-            )
+        _validate_interfaces(entry)
 
         # Attach the approximate per-lab cost
         entry = dict(entry)  # shallow copy so we don't mutate the parsed JSON
@@ -74,4 +94,18 @@ def get_template(template_id: str) -> dict[str, Any] | None:
     for t in _catalog:
         if t["id"] == template_id:
             return t
+    return None
+
+
+def get_interface(template: dict[str, Any], interface_id: str | None = None) -> dict[str, Any] | None:
+    """
+    Resolve one of a template's interfaces by id.
+    With interface_id None, returns the default (first) interface.
+    Returns None if the template does not offer that interface.
+    """
+    if interface_id is None:
+        return template["interfaces"][0]
+    for iface in template["interfaces"]:
+        if iface["id"] == interface_id:
+            return iface
     return None

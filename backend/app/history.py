@@ -165,6 +165,8 @@ def to_session(doc: Mapping[str, Any], template_name: TemplateNamer) -> dict[str
         "createdAt": _rfc3339(doc.get("createdAt")),
         "expiresAt": _rfc3339(doc.get("expiresAt")),
     }
+    if doc.get("interface"):
+        session["interface"] = doc["interface"]
     if doc.get("endReason"):
         session["endReason"] = doc["endReason"]
     ended_at = _rfc3339(doc.get("endedAt"))

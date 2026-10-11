@@ -223,9 +223,9 @@ Three service accounts are created:
 
 ## Lab Catalog
 
-The catalog is a JSON file at `templates/catalog.json`, mounted into the API container at `/app/catalog.json`. It is loaded once at startup. Required fields per entry: `id`, `name`, `description`, `image`, `interface`, `tools`, `cpu`, `memory`, `durationMinutes`. The backend attaches an `approxCostUsd` field derived from the resource configuration before returning the catalog to the dashboard.
+The catalog is a JSON file at `templates/catalog.json`, mounted into the API container at `/app/catalog.json`. It is loaded once at startup. Required fields per entry: `id`, `name`, `description`, `interfaces`, `tools`, `cpu`, `memory`, `durationMinutes`. `interfaces` is a non-empty ordered list of `{ "id": "terminal" | "jupyter" | "vscode", "image": "<name>:<tag>" }` objects; the first one is the default, and a lab can offer several (for example Linux Lab via `linux-term` or `linux-code`). The public `/api/templates` response lists only the interface IDs, never image names, and `POST /api/sessions` accepts an optional `interface` (default: the first). The backend attaches an `approxCostUsd` field derived from the resource configuration before returning the catalog to the dashboard.
 
-To add a lab: create a directory under `templates/`, add a `Dockerfile`, add an entry to `catalog.json`, build and push the image, then redeploy the API.
+To add a lab: create a directory under `templates/` per interface image, add a `Dockerfile` to each, add an entry to `catalog.json`, build and push the images, then redeploy the API.
 
 ---
 

@@ -23,7 +23,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .auth import current_user
-from .catalog import get_template, get_templates, load_catalog
+from .catalog import get_interface, get_template, get_templates, load_catalog
 from .config import settings
 from . import sessions
 
@@ -116,12 +116,15 @@ def templates_list() -> dict:
     tmpl = get_templates()
     # Strip internal-only fields before sending
     public_fields = (
-        "id", "name", "description", "interface", "tools",
+        "id", "name", "description", "tools",
         "cpu", "memory", "durationMinutes", "approxCostUsd",
     )
     return {
         "templates": [
-            {k: t[k] for k in public_fields if k in t}
+            {
+                **{k: t[k] for k in public_fields if k in t},
+                "interfaces": [i["id"] for i in t["interfaces"]],
+            }
             for t in tmpl
         ]
     }
@@ -150,8 +153,17 @@ def create_session(
     if template is None:
         return _err(404, "unknown_template", f"No template with id '{template_id}'.")
 
+    requested = body.get("interface")
+    iface = get_interface(template, requested)
+    if iface is None:
+        return _err(
+            400, "unknown_interface",
+            f"Template '{template_id}' does not offer interface '{requested}'.",
+        )
+    interface_id = iface["id"]
+
     try:
-        session = sessions.launch(user["uid"], user["email"], template)
+        session = sessions.launch(user["uid"], user["email"], template, interface_id)
     except ValueError as exc:
         msg = str(exc)
         if msg.startswith("active_session:"):
@@ -159,7 +171,7 @@ def create_session(
             if existing is None:
                 # The existing session was expired and just got auto-ended; retry launch
                 try:
-                    session = sessions.launch(user["uid"], user["email"], template)
+                    session = sessions.launch(user["uid"], user["email"], template, interface_id)
                     return {"session": session}
                 except Exception:
                     pass

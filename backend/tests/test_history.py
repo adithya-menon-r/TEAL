@@ -19,6 +19,7 @@ def doc(i, uid="u1", **extra):
         "uid": uid,
         "email": f"{uid}@cb.students.amrita.edu",
         "templateId": "nndl" if i % 2 else "linux",
+        "interface": "jupyter" if i % 2 else "terminal",
         "serviceName": f"lab-s{i:02d}",
         "url": f"https://lab-s{i:02d}-xyz.a.run.app",
         "status": "ended",
@@ -70,6 +71,7 @@ def test_history_shape_and_fields():
                 "id": "s01",
                 "templateId": "nndl",
                 "templateName": "NNDL - Neural Networks & Deep Learning",
+                "interface": "jupyter",
                 "status": "ended",
                 "endReason": "user",
                 "createdAt": "2026-10-01T10:00:00Z",
@@ -233,3 +235,10 @@ def test_firestore_store_builds_expected_query():
         ("order_by", "createdAt", "DESCENDING"),
         ("limit", 10),
     ]
+
+
+def test_history_omits_interface_for_old_docs():
+    old = doc(1)
+    del old["interface"]
+    s = make_client(FakeStore([old])).get("/api/sessions/history").json()["sessions"][0]
+    assert "interface" not in s

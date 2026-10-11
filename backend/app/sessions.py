@@ -84,7 +84,7 @@ def _session_to_dict(doc: dict, session_id: str) -> dict[str, Any]:
         "templateName": doc.get("templateName", ""),
         "status": doc.get("status", ""),
     }
-    for field in ("endReason", "costUsd", "accessUrl"):
+    for field in ("interface", "endReason", "costUsd", "accessUrl"):
         if field in doc:
             result[field] = doc[field]
     for ts_field in ("createdAt", "expiresAt", "endedAt", "readyAt"):
@@ -101,7 +101,9 @@ def _session_to_dict(doc: dict, session_id: str) -> dict[str, Any]:
 # Launch (§9.1)
 # ---------------------------------------------------------------------------
 
-def launch(uid: str, email: str, template: dict) -> dict[str, Any]:
+def launch(
+    uid: str, email: str, template: dict, interface: str | None = None
+) -> dict[str, Any]:
     """
     Create a new lab session and fire off the Cloud Run create.
 
@@ -123,6 +125,8 @@ def launch(uid: str, email: str, template: dict) -> dict[str, Any]:
     if active_count >= settings.MAX_CONCURRENT_LABS:
         raise ValueError("capacity_full")
 
+    interface = interface or template["interfaces"][0]["id"]
+
     session_id = _new_session_id()
     token = secrets.token_hex(32)
     token_hash = hashlib.sha256(token.encode()).hexdigest()
@@ -136,6 +140,7 @@ def launch(uid: str, email: str, template: dict) -> dict[str, Any]:
         "email": email,
         "templateId": template["id"],
         "templateName": template["name"],
+        "interface": interface,
         "serviceName": service_name,
         "url": None,
         "status": "starting",
@@ -151,6 +156,7 @@ def launch(uid: str, email: str, template: dict) -> dict[str, Any]:
     active_doc = {
         "sessionId": session_id,
         "templateId": template["id"],
+        "interface": interface,
         "serviceName": service_name,
         "url": None,
         "status": "starting",
@@ -191,7 +197,7 @@ def launch(uid: str, email: str, template: dict) -> dict[str, Any]:
 
     # Fire-and-forget Cloud Run create (§9.1 step 5)
     try:
-        provisioner.create(session_id, template, env_vars)
+        provisioner.create(session_id, template, env_vars, interface)
     except Exception as exc:
         logger.error("provision failed session=%s: %s", session_id, exc)
         try:

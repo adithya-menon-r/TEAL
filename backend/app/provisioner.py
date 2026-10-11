@@ -20,6 +20,7 @@ from google.api_core.exceptions import NotFound
 from google.cloud import run_v2
 from google.protobuf import duration_pb2
 
+from .catalog import get_interface
 from .config import settings
 
 logger = logging.getLogger(__name__)
@@ -48,7 +49,12 @@ def _service_name(service_id: str) -> str:
 # Public API
 # ---------------------------------------------------------------------------
 
-def create(session_id: str, template: dict, env_vars: dict[str, str]) -> None:
+def create(
+    session_id: str,
+    template: dict,
+    env_vars: dict[str, str],
+    interface_id: str | None = None,
+) -> None:
     """
     Create a Cloud Run service for the lab session (§5.4).
     Does NOT wait for the operation to finish — readiness is checked later.
@@ -56,12 +62,15 @@ def create(session_id: str, template: dict, env_vars: dict[str, str]) -> None:
     Raises google.api_core.exceptions.GoogleAPIError on failure.
     """
     service_id = f"lab-{session_id}"
-    image = f"{settings.IMAGE_REPO}/{template['image']}"
+    iface = get_interface(template, interface_id)
+    if iface is None:
+        raise ValueError(f"Template '{template['id']}' has no interface '{interface_id}'")
+    image = f"{settings.IMAGE_REPO}/{iface['image']}"
 
     lab_info = json.dumps({
         "name": template["name"],
         "description": template["description"],
-        "interface": template["interface"],
+        "interface": iface["id"],
         "tools": template["tools"],
         "cpu": template["cpu"],
         "memory": template["memory"],
@@ -75,6 +84,7 @@ def create(session_id: str, template: dict, env_vars: dict[str, str]) -> None:
             "teal-lab": "true",
             "teal-session": session_id,
             "teal-template": template["id"],
+            "teal-interface": iface["id"],
         },
         ingress=run_v2.IngressTraffic.INGRESS_TRAFFIC_ALL,
         invoker_iam_disabled=True,
