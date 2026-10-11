@@ -1,0 +1,57 @@
+# infra/cloudbuild-labs.yaml
+# Builds the gateway (which bundles lab-ui) and then every lab image, all with the same tag.
+# Rebuild this whenever gateway/, lab-ui/ or anything under templates/ changes.
+#
+# Usage (run from repo root in Cloud Shell):
+#   gcloud builds submit --config infra/cloudbuild-labs.yaml --substitutions=_TAG=v3 .
+#
+# Then point every image in templates/catalog.json at the new tag and merge to main.
+
+substitutions:
+  _TAG: v3
+
+steps:
+  - id: gateway
+    name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "asia-south1-docker.pkg.dev/$PROJECT_ID/teal/gateway:${_TAG}",
+           "-f", "templates/gateway.Dockerfile", "."]
+
+  - id: linux-term
+    name: gcr.io/cloud-builders/docker
+    waitFor: ["gateway"]
+    args: ["build", "-t", "asia-south1-docker.pkg.dev/$PROJECT_ID/teal/linux-term:${_TAG}",
+           "-f", "templates/linux-term/Dockerfile",
+           "--build-arg", "GATEWAY_IMAGE=asia-south1-docker.pkg.dev/$PROJECT_ID/teal/gateway:${_TAG}", "."]
+
+  - id: linux-code
+    name: gcr.io/cloud-builders/docker
+    waitFor: ["gateway"]
+    args: ["build", "-t", "asia-south1-docker.pkg.dev/$PROJECT_ID/teal/linux-code:${_TAG}",
+           "-f", "templates/linux-code/Dockerfile",
+           "--build-arg", "GATEWAY_IMAGE=asia-south1-docker.pkg.dev/$PROJECT_ID/teal/gateway:${_TAG}", "."]
+
+  - id: pfl
+    name: gcr.io/cloud-builders/docker
+    waitFor: ["gateway"]
+    args: ["build", "-t", "asia-south1-docker.pkg.dev/$PROJECT_ID/teal/pfl:${_TAG}",
+           "-f", "templates/pfl/Dockerfile",
+           "--build-arg", "GATEWAY_IMAGE=asia-south1-docker.pkg.dev/$PROJECT_ID/teal/gateway:${_TAG}", "."]
+
+  - id: nndl
+    name: gcr.io/cloud-builders/docker
+    waitFor: ["gateway"]
+    args: ["build", "-t", "asia-south1-docker.pkg.dev/$PROJECT_ID/teal/nndl:${_TAG}",
+           "-f", "templates/nndl/Dockerfile",
+           "--build-arg", "GATEWAY_IMAGE=asia-south1-docker.pkg.dev/$PROJECT_ID/teal/gateway:${_TAG}", "."]
+
+images:
+  - asia-south1-docker.pkg.dev/$PROJECT_ID/teal/gateway:${_TAG}
+  - asia-south1-docker.pkg.dev/$PROJECT_ID/teal/linux-term:${_TAG}
+  - asia-south1-docker.pkg.dev/$PROJECT_ID/teal/linux-code:${_TAG}
+  - asia-south1-docker.pkg.dev/$PROJECT_ID/teal/pfl:${_TAG}
+  - asia-south1-docker.pkg.dev/$PROJECT_ID/teal/nndl:${_TAG}
+
+timeout: 3600s
+
+options:
+  machineType: E2_HIGHCPU_8
