@@ -8,6 +8,7 @@ import type {
   LaunchResponse,
   Me,
   Session,
+  TemplateInterface,
   SessionResponse,
   Template,
   TemplatesResponse,
@@ -135,10 +136,15 @@ export async function getSession(signal?: AbortSignal): Promise<Session | null> 
 /**
  * Launch a lab. Errors: 409 `active_session` (the existing session is in
  * `error.body.session`), 403 `launches_disabled`, 429 `capacity_full`,
- * 404 `unknown_template`, 502 `provision_failed`.
+ * 404 `unknown_template`, 400 `unknown_interface`, 502 `provision_failed`.
  */
-export async function launchSession(templateId: string): Promise<Session> {
-  return (await apiFetch<LaunchResponse>("/api/sessions", { method: "POST", body: { templateId } })).session
+export async function launchSession(templateId: string, iface?: TemplateInterface): Promise<Session> {
+  return (
+    await apiFetch<LaunchResponse>("/api/sessions", {
+      method: "POST",
+      body: iface ? { templateId, interface: iface } : { templateId },
+    })
+  ).session
 }
 
 /** End the active lab. Returns the ended session (with `costUsd`). 404 `no_active_session`. */
@@ -160,6 +166,7 @@ const FRIENDLY: Partial<Record<string, string>> = {
   capacity_full: "All lab slots are busy, try again in a few minutes.",
   provision_failed: "We couldn't start your lab. Please try again.",
   unknown_template: "That lab isn't available any more.",
+  unknown_interface: "That lab doesn't offer that interface. Pick another one and try again.",
   active_session: "You already have a lab running.",
   no_active_session: "You don't have a lab running.",
   email_not_verified: "Verify your email to use TEAL.",

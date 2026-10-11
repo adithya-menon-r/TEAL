@@ -4,6 +4,7 @@ import { ArrowUpRightIcon, Loader2Icon, PowerIcon, TriangleAlertIcon } from "luc
 
 import { Countdown } from "@/components/countdown"
 import { LaunchSteps } from "@/components/dashboard/launch-steps"
+import { InterfaceBadge } from "@/components/interface-badge"
 import { LabIcon } from "@/components/lab-icon"
 import { StatusPill } from "@/components/status-dot"
 import {
@@ -115,6 +116,7 @@ export function ActiveLabCard({
                 {session.templateName}
               </h2>
               <StatusPill status={session.status} />
+              {session.interface && <InterfaceBadge interface={session.interface} />}
             </div>
             <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs text-muted-foreground">
               <span>Started {formatTime(session.createdAt)}</span>

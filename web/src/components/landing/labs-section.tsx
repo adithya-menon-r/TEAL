@@ -3,7 +3,7 @@ import { ClockIcon, CpuIcon } from "lucide-react"
 import { LabIcon } from "@/components/lab-icon"
 import { SectionHeading } from "@/components/landing/section-heading"
 import { Stagger, StaggerItem } from "@/components/motion"
-import { Badge } from "@/components/ui/badge"
+import { InterfaceBadge } from "@/components/interface-badge"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -23,9 +23,11 @@ function LabCard({ lab }: { lab: Template }) {
           <span className="grid size-11 place-items-center rounded-lg border bg-primary-soft text-primary-ink transition-[background-color,color] duration-200 ease-out group-hover/card:group-hover/card:bg-primary group-hover/card:text-primary-foreground">
             <LabIcon id={lab.id} className="size-5" />
           </span>
-          <Badge variant={lab.interface === "jupyter" ? "accent" : lab.interface === "vscode" ? "default" : "outline"} mono>
-            {lab.interface === "jupyter" ? "JupyterLab" : lab.interface === "vscode" ? "VS Code" : "Terminal"}
-          </Badge>
+          <div className="flex flex-wrap justify-end gap-1.5">
+            {lab.interfaces.map((i) => (
+              <InterfaceBadge key={i} interface={i} />
+            ))}
+          </div>
         </div>
         <h3 className="mt-3 text-lg leading-snug font-bold tracking-tight">{lab.name}</h3>
         <p className="text-sm leading-relaxed text-muted-foreground">{lab.description}</p>

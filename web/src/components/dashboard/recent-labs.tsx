@@ -5,7 +5,7 @@ import { LabIcon } from "@/components/lab-icon"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { END_REASON_LABEL, formatDateTime, formatDuration, formatUsd } from "@/lib/format"
+import { END_REASON_LABEL, formatDateTime, formatDuration, formatUsd, interfaceLabel } from "@/lib/format"
 import { transitions } from "@/lib/motion"
 import type { EndReason, Session } from "@/lib/types"
 
@@ -14,6 +14,11 @@ const REASON_VARIANT: Record<EndReason, "muted" | "warning" | "outline" | "dange
   expired: "warning",
   deleted: "outline",
   failed: "danger",
+}
+
+function labTitle(s: Session): string {
+  const label = interfaceLabel(s.interface)
+  return label ? `${s.templateName} · ${label}` : s.templateName
 }
 
 function ReasonBadge({ session }: { session: Session }) {
@@ -73,8 +78,11 @@ export function RecentLabs({ sessions }: { sessions: Session[] }) {
                     <span className="grid size-7 shrink-0 place-items-center rounded-md border bg-popover text-muted-foreground">
                       <LabIcon id={s.templateId} className="size-3.5" />
                     </span>
-                    <span className="truncate font-medium" title={s.templateName}>
+                    <span className="truncate font-medium" title={labTitle(s)}>
                       {s.templateName}
+                      {s.interface && interfaceLabel(s.interface) && (
+                        <span className="font-normal text-muted-foreground"> · {interfaceLabel(s.interface)}</span>
+                      )}
                     </span>
                   </div>
                 </td>
@@ -106,7 +114,12 @@ export function RecentLabs({ sessions }: { sessions: Session[] }) {
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-3">
-                  <p className="min-w-0 truncate font-medium">{s.templateName}</p>
+                  <p className="min-w-0 truncate font-medium" title={labTitle(s)}>
+                    {s.templateName}
+                    {interfaceLabel(s.interface) && (
+                      <span className="font-normal text-muted-foreground"> · {interfaceLabel(s.interface)}</span>
+                    )}
+                  </p>
                   <span className="shrink-0 font-mono text-xs font-medium tabular-nums">{formatUsd(s.costUsd)}</span>
                 </div>
                 <p className="mt-0.5 font-mono text-xs text-muted-foreground">

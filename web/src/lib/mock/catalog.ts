@@ -31,8 +31,8 @@ const entries: CatalogEntry[] = [
   {
     id: "linux",
     name: "Linux Lab",
-    description: "A clean Ubuntu shell with common command-line and build tools.",
-    interface: "terminal",
+    description: "A clean Ubuntu shell with common command-line and build tools, in the terminal or a full VS Code editor.",
+    interfaces: ["terminal", "vscode"],
     tools: [
       "bash",
       "gcc / make (build-essential)",
@@ -43,6 +43,7 @@ const entries: CatalogEntry[] = [
       "git",
       "tmux",
       "curl",
+      "VS Code (code-server)",
     ],
     cpu: "1",
     memory: "1Gi",
@@ -53,7 +54,7 @@ const entries: CatalogEntry[] = [
     name: "PFL: Principles of Functional Languages",
     description:
       "Haskell toolchain installed with GHCup: compile with ghc, experiment in ghci, build projects with cabal or stack.",
-    interface: "terminal",
+    interfaces: ["terminal"],
     tools: [
       "GHC 9.x (GHCup recommended)",
       "GHCi",
@@ -73,7 +74,7 @@ const entries: CatalogEntry[] = [
     id: "nndl",
     name: "NNDL - Neural Networks & Deep Learning",
     description: "JupyterLab with TensorFlow (CPU) and Keras.",
-    interface: "jupyter",
+    interfaces: ["jupyter"],
     tools: [
       "Python 3.12",
       "JupyterLab",
@@ -86,21 +87,6 @@ const entries: CatalogEntry[] = [
     ],
     cpu: "2",
     memory: "4Gi",
-    durationMinutes: 60,
-  },
-  {
-    id: "linux-v2",
-    name: "Linux Lab (VS Code)",
-    description: "Full-fledged VS Code editor in the browser. Pre-configured for general software development.",
-    interface: "vscode",
-    tools: [
-      "VS Code (code-server)",
-      "Python 3.12",
-      "git",
-      "curl",
-    ],
-    cpu: "1",
-    memory: "1Gi",
     durationMinutes: 60,
   },
 ]

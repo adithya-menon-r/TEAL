@@ -11,7 +11,7 @@ import {
 } from "@/lib/api"
 import { END_REASON_LABEL, formatUsd } from "@/lib/format"
 import { hasFlag, setFlag } from "@/lib/storage"
-import type { Session, Template } from "@/lib/types"
+import type { Session, Template, TemplateInterface } from "@/lib/types"
 
 /** Poll every 2 s while a lab is starting (or ending), every 30 s otherwise (PLAN.md §8.1). */
 const FAST_POLL_MS = 2_000
@@ -29,6 +29,7 @@ export function isActiveSession(session: Session | null | undefined): session is
 export type LabFailure = {
   templateId: string
   templateName: string
+  interface?: TemplateInterface
   message: string
   /** Set when the failure is a session (so it can be dismissed for good). */
   sessionId?: string
@@ -95,6 +96,7 @@ export function useLabSession() {
             sessionId: failed.id,
             templateId: failed.templateId,
             templateName: failed.templateName,
+            interface: failed.interface,
             message: START_FAILED_MESSAGE,
           }
     )
@@ -229,12 +231,12 @@ export function useLabSession() {
   }, [refresh])
 
   const launch = useCallback(
-    async (template: Pick<Template, "id" | "name">): Promise<LaunchOutcome> => {
+    async (template: Pick<Template, "id" | "name">, iface?: TemplateInterface): Promise<LaunchOutcome> => {
       setLaunchingId(template.id)
       setNotice(null)
       setFailure(null)
       try {
-        const started = await launchSession(template.id)
+        const started = await launchSession(template.id, iface)
         takeSession(started)
         return "started"
       } catch (error) {
@@ -247,13 +249,13 @@ export function useLabSession() {
         }
         const message = apiErrorMessage(error)
         if (isApiError(error, "provision_failed")) {
-          setFailure({ templateId: template.id, templateName: template.name, message })
+          setFailure({ templateId: template.id, templateName: template.name, interface: iface, message })
           bumpHistory()
         } else if (isApiError(error, "launches_disabled")) {
           setNotice({ tone: "warning", message })
         } else if (isApiError(error, "capacity_full")) {
           setNotice({ tone: "warning", message })
-        } else if (isApiError(error, "unknown_template")) {
+        } else if (isApiError(error, "unknown_template") || isApiError(error, "unknown_interface")) {
           setNotice({ tone: "danger", message })
         } else {
           setNotice({ tone: "danger", message: `Couldn't launch ${template.name}. ${message}` })
@@ -299,7 +301,7 @@ export function useLabSession() {
   const retryFailure = useCallback(async (): Promise<LaunchOutcome> => {
     if (!failure) return "failed"
     if (failure.sessionId) setFlag(dismissedKey(failure.sessionId))
-    return launch({ id: failure.templateId, name: failure.templateName })
+    return launch({ id: failure.templateId, name: failure.templateName }, failure.interface)
   }, [failure, launch])
 
   return {

@@ -1,16 +1,19 @@
-import { useEffect, useRef, useState } from "react"
-import { ArrowRightIcon, ClockIcon, CpuIcon, RocketIcon, WalletIcon } from "lucide-react"
+import { useEffect, useRef, useState, type KeyboardEvent } from "react"
+import { ArrowRightIcon, ClockIcon, CodeXmlIcon, CpuIcon, NotebookIcon, RocketIcon, SquareTerminalIcon, WalletIcon } from "lucide-react"
+import { motion } from "motion/react"
 
 import { LabIcon } from "@/components/lab-icon"
 import { Stagger, StaggerItem } from "@/components/motion"
 import { StatusDot } from "@/components/status-dot"
+import { InterfaceBadge } from "@/components/interface-badge"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { formatResources, formatUsd } from "@/lib/format"
-import type { Template } from "@/lib/types"
+import { cn } from "@/lib/utils"
+import { formatResources, formatUsd, interfaceLabel } from "@/lib/format"
+import type { Template, TemplateInterface } from "@/lib/types"
 
 const VISIBLE_TOOLS = 5
 
@@ -23,7 +26,7 @@ type CatalogGridProps = {
   /** Why Launch is disabled, shown as a tooltip. */
   blockedReason?: string
   launchingId: string | null
-  onLaunch: (template: Template) => void
+  onLaunch: (template: Template, iface: TemplateInterface) => void
 }
 
 export function CatalogGrid({
@@ -44,7 +47,7 @@ export function CatalogGrid({
             blocked={launchBlocked || (launchingId !== null && launchingId !== t.id)}
             blockedReason={launchBlocked ? blockedReason : undefined}
             launching={launchingId === t.id}
-            onLaunch={() => onLaunch(t)}
+            onLaunch={(iface) => onLaunch(t, iface)}
           />
         </StaggerItem>
       ))}
@@ -65,9 +68,11 @@ function LabCard({
   blocked: boolean
   blockedReason?: string
   launching: boolean
-  onLaunch: () => void
+  onLaunch: (iface: TemplateInterface) => void
 }) {
   const [expanded, setExpanded] = useState(false)
+  const [iface, setIface] = useInterfaceChoice(template)
+  const multi = template.interfaces.length > 1
   const extra = template.tools.length - VISIBLE_TOOLS
   const tools = expanded ? template.tools : template.tools.slice(0, VISIBLE_TOOLS)
   const toolsId = `tools-${template.id}`
@@ -86,7 +91,7 @@ function LabCard({
   const launchButton = (
     <Button
       ref={buttonRef}
-      onClick={onLaunch}
+      onClick={() => onLaunch(iface)}
       loading={launching}
       disabled={blocked}
       className="group/launch w-full"
@@ -112,9 +117,7 @@ function LabCard({
                 Active
               </Badge>
             )}
-            <Badge variant={template.interface === "jupyter" ? "accent" : template.interface === "vscode" ? "default" : "outline"} mono>
-              {template.interface === "jupyter" ? "JupyterLab" : template.interface === "vscode" ? "VS Code" : "Terminal"}
-            </Badge>
+            {!multi && <InterfaceBadge interface={template.interfaces[0]} />}
           </div>
         </div>
         <h3 className="mt-3 text-base leading-snug font-bold tracking-tight">{template.name}</h3>
@@ -157,7 +160,16 @@ function LabCard({
         </dl>
       </CardContent>
 
-      <CardFooter>
+      <CardFooter className="flex-col items-stretch gap-3">
+        {multi && (
+          <InterfacePicker
+            labId={template.id}
+            options={template.interfaces}
+            value={iface}
+            onChange={setIface}
+            disabled={blocked}
+          />
+        )}
         {blockedReason ? (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -176,6 +188,122 @@ function LabCard({
         )}
       </CardFooter>
     </Card>
+  )
+}
+
+const CHOICE_KEY = "teal.interface."
+
+function readChoice(template: Template): TemplateInterface {
+  try {
+    const saved = window.localStorage.getItem(CHOICE_KEY + template.id)
+    const match = template.interfaces.find((i) => i === saved)
+    if (match) return match
+  } catch {
+    // storage blocked: fall through to the default
+  }
+  return template.interfaces[0]
+}
+
+/** Selected interface for a lab; defaults to the first, remembers the last pick in localStorage. */
+function useInterfaceChoice(template: Template) {
+  const [choice, setChoice] = useState<TemplateInterface>(() => readChoice(template))
+  // Catalog may change under us; never keep a value the lab doesn't offer.
+  const value = template.interfaces.includes(choice) ? choice : template.interfaces[0]
+  const set = (next: TemplateInterface) => {
+    setChoice(next)
+    try {
+      window.localStorage.setItem(CHOICE_KEY + template.id, next)
+    } catch {
+      // ignore: the choice just won't be remembered
+    }
+  }
+  return [value, set] as const
+}
+
+const INTERFACE_ICONS: Record<TemplateInterface, typeof CpuIcon> = {
+  terminal: SquareTerminalIcon,
+  vscode: CodeXmlIcon,
+  jupyter: NotebookIcon,
+}
+
+/** Segmented radio group; arrow keys move + select, Tab enters/leaves the group. */
+function InterfacePicker({
+  labId,
+  options,
+  value,
+  onChange,
+  disabled,
+}: {
+  labId: string
+  options: TemplateInterface[]
+  value: TemplateInterface
+  onChange: (next: TemplateInterface) => void
+  disabled: boolean
+}) {
+  const refs = useRef<Record<string, HTMLButtonElement | null>>({})
+  const labelId = `iface-label-${labId}`
+
+  function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
+    if (disabled) return
+    const step = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0
+    if (!step) return
+    e.preventDefault()
+    const next = options[(options.indexOf(value) + step + options.length) % options.length]
+    onChange(next)
+    refs.current[next]?.focus()
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span id={labelId} className="mono-label text-muted-foreground">
+        Open with
+      </span>
+      <div
+        role="radiogroup"
+        aria-labelledby={labelId}
+        aria-disabled={disabled || undefined}
+        onKeyDown={onKeyDown}
+        className={cn(
+          "grid gap-1 rounded-md border bg-muted p-1",
+          disabled && "opacity-60"
+        )}
+        style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
+      >
+        {options.map((opt) => {
+          const selected = opt === value
+          const Icon = INTERFACE_ICONS[opt]
+          return (
+            <button
+              key={opt}
+              ref={(el) => {
+                refs.current[opt] = el
+              }}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              disabled={disabled}
+              tabIndex={selected ? 0 : -1}
+              onClick={() => onChange(opt)}
+              className={cn(
+                "relative inline-flex h-8 items-center justify-center gap-1.5 rounded-sm px-2 text-xs font-semibold outline-none transition-colors duration-150",
+                "focus-visible:ring-[3px] focus-visible:ring-ring/35 disabled:cursor-not-allowed",
+                selected ? "text-primary-ink" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {selected && (
+                <motion.span
+                  layoutId={`iface-pill-${labId}`}
+                  transition={{ type: "spring", stiffness: 500, damping: 36 }}
+                  className="absolute inset-0 rounded-sm border border-primary/25 bg-card shadow-xs"
+                />
+              )}
+              <Icon className="relative size-3.5 shrink-0" aria-hidden />
+              <span className="relative truncate">{interfaceLabel(opt)}</span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
