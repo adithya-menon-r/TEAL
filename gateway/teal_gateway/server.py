@@ -505,8 +505,6 @@ class GatewayApp:
             return web.Response(status=410, text="Lab session has expired", content_type="text/plain")
 
         target_url = f"{self.upstream_url}{request.path}"
-        if request.query_string:
-            target_url = f"{target_url}?{request.query_string}"
         return await forward_request(request, target_url, self.session)
 
     async def handle_root(self, request: web.Request) -> web.Response:

@@ -278,8 +278,10 @@ export const App: React.FC = () => {
           />
         </main>
 
-        {/* Constantly Visible Right Details Panel (Host to File Explorer) */}
-        <RightPanel labInfo={gatewayInfo.lab} />
+        {/* Right Details Panel (File Explorer) - hidden for vscode lab where it is redundant */}
+        {gatewayInfo.lab.interface !== 'vscode' && (
+          <RightPanel labInfo={gatewayInfo.lab} />
+        )}
       </div>
 
       {/* End Lab Confirmation Modal */}
