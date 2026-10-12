@@ -5,7 +5,7 @@
 <h1 align="center">TEAL</h1>
 
 <p align="center">
-  A cloud-hosted lab platform built for Amrita University students. Provisions isolated, time-limited lab environments on Google Cloud Run and serves them through a browser, requiring no local installation. Students log in with their Amrita student email, launch a lab, and get a fully interactive terminal or Jupyter environment that runs for 60 minutes before being automatically cleaned up.
+  A cloud-hosted lab platform built for Amrita University students. Provisions isolated, time-limited lab environments on Google Cloud Run and serves them through a browser, requiring no local installation. Students log in with their Amrita student email, launch a lab, and get a fully interactive terminal, VS Code (openvscode-server), or JupyterLab environment that runs for 60 minutes before being automatically cleaned up.
 </p>
 
 ---
@@ -28,6 +28,11 @@
 - [Reaper](#reaper)
 - [Local Development](#local-development)
 - [Deployment](#deployment)
+  - [First-time setup](#first-time-setup)
+  - [CI/CD Deployment (GitHub Actions)](#cicd-deployment-github-actions)
+  - [Building lab images](#building-lab-images)
+  - [Deploying the API manually](#deploying-the-api-manually)
+  - [Deploying the dashboard](#deploying-the-dashboard)
 - [Environment Variables](#environment-variables)
 - [GCP Services Used](#gcp-services-used)
 - [Repository Structure](#repository-structure)
@@ -37,7 +42,7 @@
 
 ## Overview
 
-Each lab session is a dedicated Cloud Run service. The backend API creates the service on demand, the gateway sidecar inside the container handles authentication via a one-time token and proxies the terminal or Jupyter interface, and the dashboard polls for status and provides the access link once the container is ready.
+Each lab session is a dedicated Cloud Run service. The backend API creates the service on demand, the gateway sidecar inside the container handles authentication via a one-time token and proxies the terminal, VS Code, or JupyterLab interface, and the dashboard polls for status and provides the access link once the container is ready.
 
 Key properties:
 
@@ -69,26 +74,26 @@ A FastAPI application deployed as a Cloud Run service (`teal-api`). It is the si
 
 | File | Purpose |
 |---|---|
-| `app/main.py` | FastAPI app, routes, CORS, startup |
+| `app/main.py` | FastAPI app, routes, CORS, startup, interface selection |
 | `app/auth.py` | Firebase ID token verification, email domain check |
-| `app/catalog.py` | Loads and validates `catalog.json` at startup |
-| `app/sessions.py` | Full session lifecycle: launch, ready-check, end, token verify |
+| `app/catalog.py` | Loads and validates `catalog.json` with multi-interface validation |
+| `app/sessions.py` | Full session lifecycle: launch with interface, ready-check, end |
 | `app/provisioner.py` | Cloud Run Admin API v2 wrapper (create, status, delete, list) |
 | `app/reaper.py` | Reaper logic and `POST /internal/reap` endpoint |
-| `app/history.py` | `GET /api/sessions/history` — last 10 sessions |
+| `app/history.py` | `GET /api/sessions/history` — last 10 sessions with interface info |
 | `app/cost.py` | USD cost calculation from CPU/memory/duration |
-| `app/config.py` | Typed settings object from environment variables |
+| `app/config.py` | Typed settings object; auto-loads `.env` and resolves catalog path |
 
 **API routes:**
 
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/api/me` | Authenticated identity check |
-| `GET` | `/api/templates` | Public lab catalog |
-| `GET` | `/api/session` | Active session with readiness polling |
-| `POST` | `/api/sessions` | Launch a new lab |
+| `GET` | `/api/templates` | Public lab catalog with available interface IDs |
+| `GET` | `/api/session` | Active session with readiness polling and interface |
+| `POST` | `/api/sessions` | Launch a new lab (accepts `template` and optional `interface`) |
 | `DELETE` | `/api/session` | End the active lab |
-| `GET` | `/api/sessions/history` | Last 10 sessions for the authenticated user |
+| `GET` | `/api/sessions/history` | Last 10 sessions with interface used |
 | `POST` | `/api/labs/{id}/end` | Lab-side end callback (lab token auth) |
 | `POST` | `/internal/reap` | Cloud Scheduler reaper (OIDC auth) |
 
@@ -96,8 +101,8 @@ A FastAPI application deployed as a Cloud Run service (`teal-api`). It is the si
 
 | Collection | Document key | Purpose |
 |---|---|---|
-| `sessions/{sessionId}` | Random 10-char ID | Permanent session record |
-| `activeSessions/{uid}` | Firebase UID | One-per-user lock, scanned by reaper |
+| `sessions/{sessionId}` | Random 10-char ID | Permanent session record (includes `interface`, status, cost) |
+| `activeSessions/{uid}` | Firebase UID | One-per-user lock with active `interface`, scanned by reaper |
 | `sessionSecrets/{sessionId}` | Session ID | Plaintext + SHA-256 of lab token, deleted on end |
 
 ### Lab Gateway
@@ -110,9 +115,9 @@ A Python `aiohttp` server embedded as a sidecar in every lab container image. It
 
 | File | Purpose |
 |---|---|
-| `teal_gateway/server.py` | Main aiohttp app, all route handlers |
-| `teal_gateway/proxy.py` | HTTP streaming and bidirectional WebSocket reverse proxy |
-| `teal_gateway/supervisor.py` | Manages the child process (ttyd or JupyterLab) |
+| `teal_gateway/server.py` | Main aiohttp app, auth, and route handlers |
+| `teal_gateway/proxy.py` | HTTP streaming and WebSocket reverse proxy; strips `X-Frame-Options` |
+| `teal_gateway/supervisor.py` | Manages child process (ttyd, openvscode-server, JupyterLab) |
 | `teal_gateway/__main__.py` | CLI entrypoint, argument parsing |
 
 **Gateway endpoints:**
@@ -124,7 +129,7 @@ A Python `aiohttp` server embedded as a sidecar in every lab container image. It
 | `GET` | `/__teal/info` | Lab metadata (name, tools, expiry, dashboard URL) |
 | `POST` | `/__teal/end` | Terminate lab — calls teal-api and stops child process |
 | `GET` | `/__teal/files` | Browse, download files, or stream home directory as tar.gz |
-| `*` | `/terminal/*` or `/jupyter/*` | Proxied to the upstream interface process |
+| `*` | `/terminal/*`, `/vscode/*`, or `/jupyter/*` | Proxied to the upstream interface process |
 | `GET` | `/` | Serves lab UI if authenticated, bootstrap page otherwise |
 
 **Authentication flow inside the lab:**
@@ -146,13 +151,16 @@ A React + TypeScript SPA deployed on Cloudflare Pages. Built with Vite, Tailwind
 |---|---|---|
 | `/` | `Landing.tsx` | Public landing page |
 | `/login` | `Login.tsx` | Email/password sign-in |
-| `/signup` | `Signup.tsx` | Account creation |
+| `/signup` | `Signup.tsx` | Account creation with strong password validation |
 | `/forgot` | `ForgotPassword.tsx` | Password reset |
 | `/verify` | `CheckInbox.tsx` | Email verification gate |
 | `/dashboard` | `Dashboard.tsx` | Lab catalog, active session, history |
+| `/404` | `NotFound.tsx` | Not found fallback page |
 
 **Dashboard behaviour:**
 
+- Interactive **Interface Picker**: Allows students to select their preferred interface (e.g. Terminal vs. VS Code) before launching labs that offer multiple options.
+- Visual **Interface Badges** (`terminal`, `vscode`, `jupyter`) across catalog cards, active session card, and recent history.
 - Polls `GET /api/session` until the lab transitions from `starting` to `running`.
 - Shows an active lab card with a live countdown timer and an "Open Lab" button once the access URL is available.
 - Displays the last 10 sessions and the cumulative USD spend.
@@ -162,14 +170,18 @@ A React + TypeScript SPA deployed on Cloudflare Pages. Built with Vite, Tailwind
 
 **Location:** `lab-ui/`
 
-A lightweight React + TypeScript SPA that is bundled into every lab container image. It is served by the gateway at `/` after authentication and wraps the terminal or Jupyter interface in a full-screen iframe.
+A lightweight React + TypeScript SPA bundled into every lab container image. It is served by the gateway at `/` after authentication and wraps the interface in a full-screen iframe:
+- `/terminal/` for ttyd
+- `/vscode/?folder=/home/student/work` for openvscode-server
+- `/jupyter/lab` for JupyterLab
 
 Features:
 
 - Top bar showing the lab name, tool list, and a live countdown timer
 - Warning toasts at 10 minutes and 2 minutes remaining
 - "End Lab" button with a confirmation modal
-- Right-side panel with lab details and a file browser backed by `/__teal/files`
+- Right-side panel with lab details and a file browser backed by `/__teal/files` (automatically hidden in VS Code mode where the editor provides its own native file explorer)
+- **Mobile Responsive Design**: Fully optimized for mobile screens and phones with a collapsible sidebar drawer (`useSidebar`), responsive top bar, and adaptive controls
 - Session-ended overlay on expiry, manual end, or health-check failure
 - Health polling every 15 seconds against `/__teal/healthz`
 
@@ -181,20 +193,25 @@ Each lab is defined by a directory containing a `Dockerfile` and an entry in `te
 
 **Available labs:**
 
-| ID | Name | Interface | CPU | Memory | Tools |
+| ID | Name | Interfaces | CPU | Memory | Tools |
 |---|---|---|---|---|---|
-| `linux` | Linux Lab | terminal (ttyd) | 1 vCPU | 1 GiB | bash, gcc, python3, git, vim, tmux |
-| `pfl` | PFL: Principles of Functional Languages | terminal (ttyd) | 1 vCPU | 2 GiB | GHC 9.x, GHCi, cabal, stack, git |
-| `nndl` | NNDL - Neural Networks and Deep Learning | jupyter | 2 vCPU | 4 GiB | Python 3.12, JupyterLab, TensorFlow (CPU), Keras, numpy, pandas |
+| `linux` | Linux Lab | `terminal` (`linux-term:v3`),<br>`vscode` (`linux-code:v3`) | 1 vCPU | 1 GiB | bash, gcc / make (build-essential), python3, pip3, vim, nano, git, tmux, curl |
+| `pfl` | PFL: Principles of Functional Languages | `terminal` (`pfl:v3`) | 1 vCPU | 2 GiB | GHC 9.x (GHCup), GHCi, cabal, stack, GHCup, vim, nano, git, tmux |
+| `nndl` | NNDL - Neural Networks & Deep Learning | `jupyter` (`nndl:v3`) | 2 vCPU | 4 GiB | Python 3.12, JupyterLab, TensorFlow (CPU), Keras, numpy, pandas, matplotlib, scikit-learn |
 
 **Image build pattern:**
 
 All lab images are multi-stage. The `gateway.Dockerfile` produces a scratch image containing the gateway code and the compiled lab-ui bundle. Each lab Dockerfile starts from a base runtime image, installs its tools, then copies `/opt/teal-gateway` from the gateway image and sets the gateway as the entrypoint.
 
 ```
-templates/gateway.Dockerfile   ->  gateway image (scratch, code + UI only)
-templates/<lab>/Dockerfile     ->  lab image (runtime + gateway + UI)
+templates/gateway.Dockerfile     ->  gateway image (scratch, code + UI only)
+templates/linux-term/Dockerfile  ->  linux-term image (bash, build-essential, tmux + ttyd)
+templates/linux-code/Dockerfile  ->  linux-code image (openvscode-server web IDE)
+templates/pfl/Dockerfile         ->  pfl image (Haskell toolchain + ttyd)
+templates/nndl/Dockerfile        ->  nndl image (JupyterLab + TensorFlow CPU)
 ```
+
+All lab images can be built together in a single Cloud Build execution using `infra/cloudbuild-labs.yaml`.
 
 The base layer (`templates/base/install-base.sh`) creates a `student` user, installs tmux, and applies a shared tmux configuration.
 
@@ -206,18 +223,21 @@ The base layer (`templates/base/install-base.sh`) creates a `student` user, inst
 |---|---|
 | `env.sh` | Shell environment for Cloud Shell sessions; sets `PROJECT`, `REGION`, service account names |
 | `setup-core.sh` | One-time GCP setup: APIs, service accounts, custom IAM role, IAM bindings |
+| `setup-wif.sh` | One-time Workload Identity Federation setup for GitHub Actions CI/CD |
 | `cloudbuild.yaml` | Cloud Build config; builds one image per invocation via `--substitutions` |
+| `cloudbuild-labs.yaml` | Unified Cloud Build pipeline; builds gateway and all lab images in one shot |
 | `api.env.yaml` | Non-secret environment variables for the `teal-api` Cloud Run deployment |
 | `firestore.rules` | Firestore security rules (deny all client access) |
 | `firestore.indexes.json` | Composite index on `sessions`: `uid ASC`, `createdAt DESC` |
 
-Three service accounts are created:
+Service accounts:
 
 | Service account | Roles | Purpose |
 |---|---|---|
 | `teal-api` | `tealProvisioner` (custom), `datastore.user`, `logging.logWriter` | Backend API identity |
 | `teal-lab-runtime` | None | Lab container identity (no GCP access by design) |
 | `teal-scheduler` | — | Calls `/internal/reap` via Cloud Scheduler OIDC |
+| `teal-cicd` | `run.admin`, `artifactregistry.writer`, `cloudbuild.builds.editor`, `iam.serviceAccountUser`, `storage.objectViewer`, `logging.logWriter` | GitHub Actions CI/CD via Workload Identity Federation |
 
 ---
 
@@ -375,31 +395,53 @@ bash infra/setup-core.sh
 
 # To also grant Cloud Build the permissions it needs:
 bash infra/setup-core.sh --build-perms
+
+# To set up Workload Identity Federation for GitHub Actions CI/CD:
+bash infra/setup-wif.sh
 ```
 
-This enables required APIs, creates service accounts, creates the `tealProvisioner` custom role, and assigns IAM bindings. It is idempotent and safe to re-run.
+This enables required APIs, creates service accounts, creates the `tealProvisioner` custom role, configures Workload Identity Federation, and assigns IAM bindings. It is idempotent and safe to re-run. Add the output `WIF_PROVIDER` and `WIF_SERVICE_ACCOUNT` as repository secrets in GitHub Actions.
 
-### Building images
+### CI/CD Deployment (GitHub Actions)
+
+The repository includes an automated CI/CD pipeline (`.github/workflows/deploy-backend.yml`) for the backend API:
+
+- **Keyless GCP authentication** via Workload Identity Federation (no long-lived service account keys).
+- **Triggered on push** to `main` when files under `backend/**`, `templates/catalog.json`, `infra/api.env.yaml`, or the workflow file change.
+- Builds Docker image directly on GitHub runner and tags with both commit SHA (`sha-<hash>`) and `:latest`.
+- Pushes image to Artifact Registry and deploys to Cloud Run with `--allow-unauthenticated` so FastAPI handles Firebase Auth verification.
+
+### Building lab images
+
+To build the gateway and all lab images (`linux-term`, `linux-code`, `pfl`, `nndl`) in a single Cloud Build invocation:
 
 ```bash
 source infra/env.sh
 
-# Build the gateway base image first (lab images depend on it)
-gcloud builds submit --config infra/cloudbuild.yaml \
-  --substitutions=_IMAGE=gateway,_TAG=v2,_DOCKERFILE=templates/gateway.Dockerfile .
-
-# Build a lab image
-gcloud builds submit --config infra/cloudbuild.yaml \
-  --substitutions=_IMAGE=nndl,_TAG=v2,_DOCKERFILE=templates/nndl/Dockerfile,_GATEWAY_TAG=v2 .
-
-# Build the API image
-gcloud builds submit --config infra/cloudbuild.yaml \
-  --substitutions=_IMAGE=api,_TAG=v1,_DOCKERFILE=backend/Dockerfile .
+# Recommended: build gateway and all lab images together with the same tag
+gcloud builds submit --config infra/cloudbuild-labs.yaml --substitutions=_TAG=v3 .
 ```
 
-### Deploying the API
+To build individual images using `infra/cloudbuild.yaml`:
 
 ```bash
+# Build the gateway base image first (lab images depend on it)
+gcloud builds submit --config infra/cloudbuild.yaml \
+  --substitutions=_IMAGE=gateway,_TAG=v3,_DOCKERFILE=templates/gateway.Dockerfile .
+
+# Build an individual lab image
+gcloud builds submit --config infra/cloudbuild.yaml \
+  --substitutions=_IMAGE=linux-code,_TAG=v3,_DOCKERFILE=templates/linux-code/Dockerfile,_GATEWAY_TAG=v3 .
+```
+
+### Deploying the API manually
+
+```bash
+# Build the API image (if not using CI/CD)
+gcloud builds submit --config infra/cloudbuild.yaml \
+  --substitutions=_IMAGE=api,_TAG=v1,_DOCKERFILE=backend/Dockerfile .
+
+# Deploy to Cloud Run
 gcloud run deploy teal-api \
   --image=$REPO/api:v1 \
   --region=$REGION \
@@ -488,47 +530,54 @@ Output directory: `web/dist`
 
 ```
 TEAL/
+├── .github/
+│   └── workflows/
+│       └── deploy-backend.yml GitHub Actions CI/CD for Cloud Run
 ├── backend/                   FastAPI backend API
 │   ├── app/
-│   │   ├── main.py            Routes and app setup
+│   │   ├── main.py            Routes, CORS, interface handling, app setup
 │   │   ├── auth.py            Firebase token verification
-│   │   ├── catalog.py         Lab catalog loader
-│   │   ├── sessions.py        Session lifecycle
+│   │   ├── catalog.py         Lab catalog loader & multi-interface validation
+│   │   ├── sessions.py        Session lifecycle (launch, poll, end)
 │   │   ├── provisioner.py     Cloud Run Admin API wrapper
 │   │   ├── reaper.py          Reaper logic and endpoint
 │   │   ├── history.py         Session history endpoint
 │   │   ├── cost.py            USD cost calculation
-│   │   └── config.py          Settings from environment
+│   │   └── config.py          Settings from environment (.env auto-load)
 │   ├── Dockerfile
 │   └── requirements.txt
 ├── gateway/                   Lab gateway sidecar
 │   └── teal_gateway/
-│       ├── server.py          aiohttp app and route handlers
-│       ├── proxy.py           HTTP and WebSocket reverse proxy
-│       ├── supervisor.py      Child process manager
+│       ├── server.py          aiohttp app, auth, and route handlers
+│       ├── proxy.py           HTTP & WebSocket reverse proxy (strips X-Frame-Options)
+│       ├── supervisor.py      Child process manager (ttyd, openvscode-server, Jupyter)
 │       └── __main__.py        CLI entrypoint
 ├── web/                       Student-facing dashboard (React)
 │   └── src/
-│       ├── pages/             Route-level page components
-│       ├── components/        Shared UI components
-│       ├── hooks/             React hooks
+│       ├── pages/             Landing, Dashboard, Login, Signup, Forgot, CheckInbox, NotFound
+│       ├── components/        CatalogGrid (with InterfacePicker), ActiveLabCard, RecentLabs
+│       ├── hooks/             React hooks (useLabSession, useAuth)
 │       ├── auth/              Firebase auth context and guards
-│       └── lib/               API client, types, utilities
+│       └── lib/               API client, types, mock data
 ├── lab-ui/                    In-lab UI served by the gateway (React)
 │   └── src/
-│       ├── App.tsx            Main layout with iframe and top bar
+│       ├── App.tsx            Main layout (embeds terminal, vscode, or jupyter iframe)
+│       ├── hooks/             useSidebar (responsive mobile drawer state)
 │       └── components/        TopBar, RightPanel, EndModal, file browser
 ├── templates/                 Lab container definitions
-│   ├── catalog.json           Lab registry
-│   ├── gateway.Dockerfile     Builds the gateway base image
+│   ├── catalog.json           Lab registry with multi-interface declarations
+│   ├── gateway.Dockerfile     Builds the gateway base image (bundles lab-ui)
 │   ├── base/                  Shared base layer (student user, tmux)
-│   ├── linux/                 Linux Lab
-│   ├── pfl/                   Functional Languages Lab (Haskell)
-│   └── nndl/                  Neural Networks Lab (JupyterLab)
+│   ├── linux-term/            Linux Lab - Terminal interface (ttyd)
+│   ├── linux-code/            Linux Lab - VS Code interface (openvscode-server)
+│   ├── pfl/                   Functional Languages Lab (Haskell toolchain)
+│   └── nndl/                  Neural Networks Lab (JupyterLab + TensorFlow)
 ├── infra/                     Deployment and infrastructure
 │   ├── env.sh                 Shell environment for Cloud Shell
 │   ├── setup-core.sh          One-time GCP provisioning script
-│   ├── cloudbuild.yaml        Cloud Build image build config
+│   ├── setup-wif.sh           Workload Identity Federation setup for GitHub Actions
+│   ├── cloudbuild.yaml        Single image Cloud Build config
+│   ├── cloudbuild-labs.yaml   Unified Cloud Build pipeline for all lab images
 │   ├── api.env.yaml           API service environment variables
 │   ├── firestore.rules        Firestore security rules
 │   └── firestore.indexes.json Firestore composite index definition
